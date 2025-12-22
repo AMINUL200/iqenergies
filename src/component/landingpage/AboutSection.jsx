@@ -11,7 +11,7 @@ const AboutSection = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"
         style={{
-          backgroundImage: `url('/public/image/Empowering-Tomorrow-with-Solar-Solutions.jpg')`,
+          backgroundImage: `url('/image/Empowering-Tomorrow-with-Solar-Solutions.jpg')`,
         }}
       >
         <div className="absolute inset-0 bg-[#0A1A2F]/80" />

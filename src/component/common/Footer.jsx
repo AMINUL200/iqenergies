@@ -14,7 +14,7 @@ const Footer = () => {
           {/* ================= LEFT: LOGO & TEXT ================= */}
           <div className="space-y-6">
             <img
-              src="/public/image/logo.png"
+              src="/image/logo.png"
               alt="IQ Energies"
               className="w-28"
             />

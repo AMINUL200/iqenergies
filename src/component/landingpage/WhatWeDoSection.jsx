@@ -42,7 +42,7 @@ const WhatWeDoSection = () => {
         className="absolute inset-0 bg-cover bg-fixed bg-center bg-no-repeat"
         style={{
           backgroundImage:
-            "url('/public/image/Empowering-Tomorrow-with-Solar-Solutions.jpg')",
+            "url('/image/Empowering-Tomorrow-with-Solar-Solutions.jpg')",
         }}
       >
         <div className="absolute inset-0 bg-[#0A1A2F]/85" />
