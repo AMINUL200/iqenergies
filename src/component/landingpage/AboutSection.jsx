@@ -6,7 +6,7 @@ const AboutSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative w-full overflow-hidden">
+    <section className="relative w-full overflow-hidden" id="about" >
       {/* ================= BACKGROUND IMAGE ================= */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat bg-fixed"

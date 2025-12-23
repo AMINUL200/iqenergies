@@ -1,13 +1,15 @@
-import React from "react";
+import React, { use } from "react";
 import {
   Settings,
   Sun,
   Wrench,
   ArrowRight,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const services = [
   {
+    id: 1,
     title: "Turnkey EPC",
     description:
       "End-to-end Engineering, Procurement, and Construction solutions delivering fully integrated solar and wind power projects with assured quality, timelines, and performance.",
@@ -15,6 +17,7 @@ const services = [
     image: "/image/Empowering-Tomorrow-with-Solar-Solutions.jpg",
   },
   {
+    id: 2,
     title: "Customized Design & Project Management",
     description:
       "Tailor-made solar and wind solutions with expert project planning, site assessment, system design, and execution management to maximize efficiency and ROI.",
@@ -22,6 +25,7 @@ const services = [
     image: "/image/Ev-Charger.jpg",
   },
   {
+    id: 3,
     title: "O&M Services",
     description:
       "Comprehensive Operations & Maintenance services ensuring optimal system performance, long-term reliability, and maximum energy output.",
@@ -31,8 +35,9 @@ const services = [
 ];
 
 const ServicesSection = () => {
+  const navigate = useNavigate();
   return (
-    <section className="relative py-10 md:py-20 bg-[#0A1A2F]" id="services">
+    <section className="relative py-10 md:py-20 md:pt-30 bg-[#0A1A2F]">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* ================= HEADER ================= */}
@@ -95,7 +100,9 @@ const ServicesSection = () => {
                       {service.description}
                     </p>
 
-                    <button className="group/btn inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-gray-900 font-semibold transition-all duration-300 hover:bg-gray-100">
+                    <button 
+                    onClick={()=> navigate(`/services/${service.id}`)}
+                    className="group/btn inline-flex items-center gap-2 px-6 py-3 rounded-full bg-white text-gray-900 font-semibold transition-all duration-300 hover:bg-gray-100">
                       Click Here
                       <ArrowRight className="w-4 h-4 transition-transform group-hover/btn:translate-x-1" />
                     </button>

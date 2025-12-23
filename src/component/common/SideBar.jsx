@@ -16,7 +16,7 @@ const SideBar = ({ toggleMenu, isOpen }) => {
 
   const sidebarLinks = [
     { id: "home", label: "Home", type: "route", path: "/", icon: <Home size={20} /> },
-    { id: "about", label: "About Us", type: "route", path: "/about", icon: <Info size={20} /> },
+    { id: "about", label: "About Us", type: "scroll", sectionId: "about", icon: <Info size={20} /> },
     { id: "solutions", label: "Solutions", type: "scroll", sectionId: "solutions", icon: <Layers size={20} /> },
     { id: "services", label: "Services", type: "scroll", sectionId: "services", icon: <Briefcase size={20} /> },
     { id: "products", label: "Products", type: "scroll", sectionId: "products", icon: <Package size={20} /> },
@@ -28,8 +28,18 @@ const SideBar = ({ toggleMenu, isOpen }) => {
   }, [location.pathname]);
 
   const handleNavClick = (item) => {
-    if (item.type === "route") {
-      navigate(item.path);
+    if (item.type === "scroll") {
+       if (location.pathname === "/") {
+        // SAME PAGE → direct scroll
+        window.dispatchEvent(
+          new CustomEvent("scroll-to-section", {
+            detail: item.sectionId,
+          })
+        );
+      } else {
+        // DIFFERENT PAGE → navigate then scroll
+        navigate("/", { state: { scrollTo: item.sectionId } });
+      }
       toggleMenu();
       return;
     }

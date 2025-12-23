@@ -1,13 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Menu,
-  Phone,
-  Mail,
-  Facebook,
-  Twitter,
-  Linkedin,
-} from "lucide-react";
+import { Menu, Phone, Mail, Facebook, Twitter, Linkedin } from "lucide-react";
 
 const Navbar = ({ toggleMenu }) => {
   const navigate = useNavigate();
@@ -16,7 +9,7 @@ const Navbar = ({ toggleMenu }) => {
 
   /* ================= BRAND COLORS ================= */
   const colors = {
-    primary: "#4CAF50",   // Green
+    primary: "#4CAF50", // Green
     secondary: "#0F766E", // Teal
     text: "#1F2933",
     muted: "#6B7280",
@@ -33,32 +26,49 @@ const Navbar = ({ toggleMenu }) => {
   /* ================= NAV LINKS ================= */
   const navLinks = [
     { id: "home", label: "Home", type: "route", path: "/" },
-    { id: "about", label: "About Us", type: "route", path: "/about" },
-    { id: "solutions", label: "Solutions", type: "scroll", sectionId: "solutions" },
-    { id: "services", label: "Services", type: "scroll", sectionId: "services" },
-    { id: "products", label: "Products", type: "scroll", sectionId: "products" },
+    { id: "about", label: "About Us", type: "scroll", sectionId: "about" },
+    {
+      id: "solutions",
+      label: "Solutions",
+      type: "scroll",
+      sectionId: "solutions",
+    },
+    {
+      id: "services",
+      label: "Services",
+      type: "scroll",
+      sectionId: "services",
+    },
+    {
+      id: "products",
+      label: "Products",
+      type: "scroll",
+      sectionId: "products",
+    },
   ];
 
   /* ================= NAV ACTION ================= */
   const handleNavClick = (item) => {
-    if (item.type === "route") {
-      navigate(item.path);
+    if (item.type === "scroll") {
+      if (location.pathname === "/") {
+        // SAME PAGE → direct scroll
+        window.dispatchEvent(
+          new CustomEvent("scroll-to-section", {
+            detail: item.sectionId,
+          })
+        );
+      } else {
+        // DIFFERENT PAGE → navigate then scroll
+        navigate("/", { state: { scrollTo: item.sectionId } });
+      }
       return;
     }
 
-    if (location.pathname === "/") {
-      setTimeout(() => {
-        document
-          .getElementById(item.sectionId)
-          ?.scrollIntoView({ behavior: "smooth" });
-      }, 50);
-    } else {
-      navigate("/", { state: { scrollTo: item.sectionId } });
-    }
+    navigate(item.path);
   };
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50">
+    <header className="fixed top-0 left-0 w-full z-50" id="main-navbar">
       {/* ================= TOP INFO BAR ================= */}
       <div
         className={`transition-all duration-300 ${
@@ -103,19 +113,14 @@ const Navbar = ({ toggleMenu }) => {
             className="flex items-center gap-2 cursor-pointer"
             onClick={() => navigate("/")}
           >
-            <img
-              src="/image/logo.png"
-              alt="IQEnergies"
-              className="w-20 h-16"
-            />
+            <img src="/image/logo.png" alt="IQEnergies" className="w-20 h-16" />
           </div>
 
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center gap-8">
             {navLinks.map((item) => {
               const isActive =
-                item.type === "route" &&
-                location.pathname === item.path;
+                item.type === "route" && location.pathname === item.path;
 
               return (
                 <span
@@ -125,9 +130,7 @@ const Navbar = ({ toggleMenu }) => {
                   style={{
                     color: isActive ? colors.primary : colors.text,
                   }}
-                  onMouseEnter={(e) =>
-                    (e.target.style.color = colors.primary)
-                  }
+                  onMouseEnter={(e) => (e.target.style.color = colors.primary)}
                   onMouseLeave={(e) =>
                     (e.target.style.color = isActive
                       ? colors.primary

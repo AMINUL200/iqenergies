@@ -12,6 +12,11 @@ import AboutUsPage from "./pages/about/AboutUsPage";
 import ProductDetails from "./pages/product/ProductDetails";
 import CheckoutPage from "./pages/checkout/CheckoutPage";
 import OrderSuccessPage from "./pages/order/OrderSuccessPage";
+import BrochurePage from "./pages/brochure/BrochurePage";
+import CertificatePage from "./pages/certificate/CertificatePage";
+import ProductPage from "./pages/product/ProductPage";
+import ServicesDetails from "./pages/services/ServicesDetails";
+import SolutionDetails from "./pages/solution/SolutionDetails";
 
 const App = () => {
   return (
@@ -24,9 +29,22 @@ const App = () => {
           <Route index path="/" element={<LandingPage />} />
           <Route path="/about" element={<AboutUsPage />} />
 
+          <Route path="/products" element={<ProductPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+
+          <Route path="/services/:slug" element={<ServicesDetails />} />
+          <Route path="/solution/:slug" element={<SolutionDetails />} />
+
+
+
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-success" element={<OrderSuccessPage />} />
+
+
+
+          <Route path="/brochure" element={<BrochurePage />} />
+          <Route path="/certificate" element={<CertificatePage />} />
+
         </Route>
 
         {/* Admin Layout */}

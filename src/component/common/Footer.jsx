@@ -1,6 +1,8 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 const Footer = () => {
+  const navigate = useNavigate();
   return (
     <footer
       className="py-16"
@@ -10,29 +12,21 @@ const Footer = () => {
     >
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
-          
           {/* ================= LEFT: LOGO & TEXT ================= */}
           <div className="space-y-6">
-            <img
-              src="/image/logo.png"
-              alt="IQ Energies"
-              className="w-28"
-            />
+            <img src="/image/logo.png" alt="IQ Energies" className="w-28" />
             <p
               className="text-base leading-relaxed max-w-sm"
               style={{ color: "#1F2933" }}
             >
-              IQ Energies Providing Sustainable Solar, Hybrid, and EV
-              Solutions for a Greener Future.
+              IQ Energies Providing Sustainable Solar, Hybrid, and EV Solutions
+              for a Greener Future.
             </p>
           </div>
 
           {/* ================= CENTER: BROCHURE QR ================= */}
           <div className="text-center space-y-4">
-            <h3
-              className="text-lg font-semibold"
-              style={{ color: "#0F766E" }}
-            >
+            <h3 className="text-lg font-semibold" style={{ color: "#0F766E" }}>
               Download Our Brochure
             </h3>
 
@@ -45,6 +39,7 @@ const Footer = () => {
             </div>
 
             <p
+              onClick={() => navigate("/brochure")}
               className="cursor-pointer font-medium"
               style={{ color: "#0F766E" }}
             >
@@ -55,7 +50,7 @@ const Footer = () => {
           {/* ================= RIGHT: CERTIFICATE QR ================= */}
           <div className="text-center space-y-4">
             <h3
-              className="text-lg font-semibold"
+              className="text-lg font-semibold  "
               style={{ color: "#0F766E" }}
             >
               Check Our Certificate
@@ -70,7 +65,8 @@ const Footer = () => {
             </div>
 
             <p
-              className="cursor-pointer font-medium"
+              onClick={() => navigate("/certificate")}
+              className="cursor-pointer font-medium cursor-pointer"
               style={{ color: "#0F766E" }}
             >
               Click to See
