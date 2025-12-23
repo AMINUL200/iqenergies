@@ -19,24 +19,28 @@ const products = {
       image:
         "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
       icon: Zap,
+      price: 18500,
     },
     {
       title: "Rooftop Solar Systems",
       image:
         "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=800",
       icon: Sun,
+      price: 18500,
     },
     {
       title: "Utility-Scale Solar Plants",
       image:
         "https://images.unsplash.com/photo-1584270354949-c26b0d05cfa0?w=800",
       icon: TrendingUp,
+      price: 18500,
     },
     {
       title: "Solar Inverter Solutions",
       image:
         "https://images.unsplash.com/photo-1624397640148-949b1732bbd3?w=800",
       icon: Shield,
+      price: 18500,
     },
   ],
   wind: [
@@ -45,24 +49,28 @@ const products = {
       image:
         "https://images.unsplash.com/photo-1532601224476-15c79f2f7a51?w=800",
       icon: Wind,
+      price: 18500,
     },
     {
       title: "Vertical Axis Wind Turbines",
       image:
         "https://images.unsplash.com/photo-1509395176047-4a66953fd231?w=800",
       icon: Wind,
+      price: 18500,
     },
     {
       title: "Onshore Wind Farms",
       image:
         "https://images.unsplash.com/photo-1509390288600-9b9b1c3f7a8b?w=800",
       icon: Leaf,
+      price: 18500,
     },
     {
       title: "Wind Energy Controllers",
       image:
         "https://images.unsplash.com/photo-1602526432604-029a709e131c?w=800",
       icon: Zap,
+      price: 18500,
     },
   ],
   water: [
@@ -71,23 +79,27 @@ const products = {
       image:
         "https://images.unsplash.com/photo-1502082553048-f009c37129b9?w=800",
       icon: Droplets,
+      price: 18500,
     },
     {
       title: "Micro Hydro Solutions",
       image:
         "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=800",
       icon: Droplets,
+      price: 18500,
     },
     {
       title: "Water Energy Turbines",
       image:
         "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=800",
       icon: Zap,
+      price: 18500,
     },
     {
       title: "Hydro Energy Storage",
       image: "https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800",
       icon: Shield,
+      price: 18500,
     },
   ],
 };
@@ -205,13 +217,30 @@ const ProductSection = () => {
                     {product.title}
                   </h3>
 
-                  <button
-                    onClick={() => navigate(`/product/${index + 1}`)}
-                    className={`inline-flex items-center gap-2 font-semibold ${theme.text}`}
-                  >
-                    More Details
-                    <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                  </button>
+                  {/* Price */}
+                  <p className="text-xl font-bold text-green-400 mb-5">
+                    ₹ {product.price.toLocaleString("en-IN")}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex items-center justify-between gap-4">
+                    {/* Add to Cart */}
+                    <button
+                      onClick={() => console.log("Add to cart:", product)}
+                      className={`flex items-center gap-2 font-semibold ${theme.text} cursor-pointer`}
+                    >
+                      Add to Cart
+                    </button>
+
+                    {/* More Details */}
+                    <button
+                      onClick={() => navigate(`/product/${index + 1}`)}
+                      className={`flex items-center gap-2 font-semibold ${theme.text} cursor-pointer`}
+                    >
+                      Details
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

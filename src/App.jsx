@@ -17,6 +17,8 @@ import CertificatePage from "./pages/certificate/CertificatePage";
 import ProductPage from "./pages/product/ProductPage";
 import ServicesDetails from "./pages/services/ServicesDetails";
 import SolutionDetails from "./pages/solution/SolutionDetails";
+import AddToCartPage from "./pages/product/AddToCartPage";
+import ProfilePage from "./pages/about/ProfilePage";
 
 const App = () => {
   return (
@@ -27,10 +29,12 @@ const App = () => {
 
         <Route element={<AppLayout />}>
           <Route index path="/" element={<LandingPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
           <Route path="/about" element={<AboutUsPage />} />
 
           <Route path="/products" element={<ProductPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
+          <Route path="/cart" element={<AddToCartPage />} />
 
           <Route path="/services/:slug" element={<ServicesDetails />} />
           <Route path="/solution/:slug" element={<SolutionDetails />} />
