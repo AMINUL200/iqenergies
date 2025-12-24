@@ -269,7 +269,7 @@ const Navbar = ({ toggleMenu }) => {
         <div className="flex justify-between items-center px-4 md:px-8 lg:px-16 xl:px-34">
           {/* Logo */}
           <div
-            className="flex items-center gap-2 cursor-pointer"
+            className="flex flex-col items-center  cursor-pointer"
             onClick={() => navigate("/")}
           >
             <img
@@ -277,12 +277,17 @@ const Navbar = ({ toggleMenu }) => {
               alt="IQEnergies"
               className="w-16 h-12 md:w-20 md:h-16 transition-transform hover:scale-105"
             />
-            <span
+            <p>
+              <span className="text-sm  text-amber-500 ">Sun. </span>
+              <span className="text-sm text-gray-400" >Wind. </span>
+              <span className="text-sm text-blue-500" >Water. </span>
+            </p>
+            {/* <span
               className="hidden md:block text-xl font-bold"
               style={{ color: colors.primary }}
             >
               IQEnergies
-            </span>
+            </span> */}
           </div>
 
           {/* Desktop Navigation */}
@@ -363,7 +368,6 @@ const Navbar = ({ toggleMenu }) => {
                     aria-label="User menu"
                     aria-expanded={userDropdownOpen}
                   >
-                    
                     {/* User Info */}
                     <div className="text-left  hidden lg:flex">
                       <div
@@ -499,8 +503,6 @@ const Navbar = ({ toggleMenu }) => {
                           </button>
                         ))}
                       </div>
-
-                     
                     </div>
                   )}
                 </div>

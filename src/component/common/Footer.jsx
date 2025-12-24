@@ -14,7 +14,18 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 items-center">
           {/* ================= LEFT: LOGO & TEXT ================= */}
           <div className="space-y-6">
-            <img src="/image/logo.png" alt="IQ Energies" className="w-28" />
+            <div className="text-center md:text-start">
+              <img
+                src="/image/logo.png"
+                alt="IQ Energies"
+                className="w-28  mx-auto md:mx-0 object-contain"
+              />
+              <p>
+                <span className="text-sm  text-amber-500 ">Sun. </span>
+                <span className="text-sm text-gray-400">Wind. </span>
+                <span className="text-sm text-blue-500">Water. </span>
+              </p>
+            </div>
             <p
               className="text-base leading-relaxed max-w-sm"
               style={{ color: "#1F2933" }}

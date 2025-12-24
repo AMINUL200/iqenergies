@@ -195,24 +195,24 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-72 
-  bg-gradient-to-b from-slate-900 to-slate-800 
+  bg-white 
   shadow-2xl transform transition-transform duration-300 ease-in-out
   ${isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}
       >
         {/* Header */}
-        <div className=" sticky flex top-0 z-50 bg-slate-900 items-center justify-between p-6 border-b border-slate-700/50">
+        <div className=" sticky flex top-0 z-50 bg-white items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gray-900 rounded-xl flex items-center justify-center shadow-sm">
               <LayoutDashboard className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white">Admin Panel</h2>
-              <p className="text-xs text-slate-400">Management Console</p>
+              <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
+              <p className="text-xs text-gray-600">Management Console</p>
             </div>
           </div>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 rounded-lg hover:bg-slate-700/50 transition-colors lg:hidden text-slate-300 hover:text-white"
+            className="p-2 rounded-lg hover:bg-gray-100 transition-colors lg:hidden text-gray-900 hover:bg-white hover:text-gray-900 border border-gray-200"
           >
             <X className="w-5 h-5" />
           </button>
@@ -226,10 +226,10 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
               {item.children ? (
                 <button
                   onClick={() => toggleDropdown(item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all duration-200 group border ${
                     isParentActive(item.children)
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "text-gray-900 border-gray-200 hover:bg-gray-100"
                   }`}
                 >
                   <div className="flex items-center space-x-3">
@@ -237,7 +237,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                       className={`${
                         isParentActive(item.children)
                           ? "text-white"
-                          : "text-slate-400 group-hover:text-white"
+                          : "text-gray-600 group-hover:text-gray-900"
                       } transition-colors`}
                     >
                       {item.icon}
@@ -247,7 +247,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                   <div
                     className={`transition-transform duration-200 ${
                       openDropdowns[item.id] ? "rotate-180" : ""
-                    }`}
+                    } ${isParentActive(item.children) ? "text-white" : "text-gray-600"}`}
                   >
                     <ChevronDown className="w-4 h-4" />
                   </div>
@@ -255,17 +255,17 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
               ) : (
                 <button
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 group border ${
                     isActive(item.path)
-                      ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30"
-                      : "text-slate-300 hover:bg-slate-700/50 hover:text-white"
+                      ? "bg-gray-900 text-white border-gray-900"
+                      : "text-gray-900 border-gray-200 hover:bg-gray-100"
                   }`}
                 >
                   <div
                     className={`${
                       isActive(item.path)
                         ? "text-white"
-                        : "text-slate-400 group-hover:text-white"
+                        : "text-gray-600 group-hover:text-gray-900"
                     } transition-colors`}
                   >
                     {item.icon}
@@ -283,22 +283,22 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                       : "max-h-0 opacity-0"
                   }`}
                 >
-                  <div className="ml-4 pl-4 border-l-2 border-slate-700/50 space-y-1 py-1">
+                  <div className="ml-4 pl-4 border-l-2 border-gray-200 space-y-1 py-1">
                     {item.children.map((child) => (
                       <button
                         key={child.id}
                         onClick={() => handleNavigation(child.path)}
                         className={`w-full flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 group ${
                           isActive(child.path)
-                            ? "bg-blue-500/20 text-blue-400 border-l-2 border-blue-400"
-                            : "text-slate-400 hover:bg-slate-700/30 hover:text-slate-200"
+                            ? "bg-gray-900 text-white"
+                            : "text-gray-600 hover:bg-gray-100 hover:text-gray-900"
                         }`}
                       >
                         <div
                           className={`${
                             isActive(child.path)
-                              ? "text-blue-400"
-                              : "text-slate-500 group-hover:text-slate-300"
+                              ? "text-white"
+                              : "text-gray-600 group-hover:text-gray-900"
                           } transition-colors`}
                         >
                           {child.icon}
