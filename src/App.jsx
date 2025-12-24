@@ -19,6 +19,9 @@ import ServicesDetails from "./pages/services/ServicesDetails";
 import SolutionDetails from "./pages/solution/SolutionDetails";
 import AddToCartPage from "./pages/product/AddToCartPage";
 import ProfilePage from "./pages/about/ProfilePage";
+import MyOrderPage from "./pages/order/MyOrderPage";
+import MyOrderDetails from "./pages/order/OrderTrackingPage";
+import OrderTrackingPage from "./pages/order/OrderTrackingPage";
 
 const App = () => {
   return (
@@ -35,6 +38,8 @@ const App = () => {
           <Route path="/products" element={<ProductPage />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/cart" element={<AddToCartPage />} />
+          <Route path="/orders" element={<MyOrderPage />} />
+          <Route path="/orders/:slug" element={<OrderTrackingPage />} />
 
           <Route path="/services/:slug" element={<ServicesDetails />} />
           <Route path="/solution/:slug" element={<SolutionDetails />} />
