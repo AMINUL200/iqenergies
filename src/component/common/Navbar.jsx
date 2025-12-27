@@ -22,13 +22,15 @@ import {
   Shield,
   Bell,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const Navbar = ({ toggleMenu }) => {
+  const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(3);
-  const [isLoggedIn, setIsLoggedIn] = useState(true); // Changed to true for testing
+  const [isLoggedIn, setIsLoggedIn] = useState(false); // Changed to true for testing
   const [darkMode, setDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
@@ -38,13 +40,7 @@ const Navbar = ({ toggleMenu }) => {
   const mobileUserDropdownRef = useRef(null);
 
   /* ================= USER DATA (Mock - Replace with real data) ================= */
-  const [userData] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    avatar: null, // You can set a URL here for avatar image
-    membership: "Premium",
-    notificationCount: 2,
-  });
+
 
   /* ================= BRAND COLORS ================= */
   const colors = {
@@ -105,7 +101,7 @@ const Navbar = ({ toggleMenu }) => {
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
+    logout(); // clears token + user
     setUserDropdownOpen(false);
     setMobileUserDropdownOpen(false);
     navigate("/login");
@@ -279,8 +275,8 @@ const Navbar = ({ toggleMenu }) => {
             />
             <p>
               <span className="text-sm  text-amber-500 ">Sun. </span>
-              <span className="text-sm text-gray-400" >Wind. </span>
-              <span className="text-sm text-blue-500" >Water. </span>
+              <span className="text-sm text-gray-400">Wind. </span>
+              <span className="text-sm text-blue-500">Water. </span>
             </p>
             {/* <span
               className="hidden md:block text-xl font-bold"
@@ -355,7 +351,7 @@ const Navbar = ({ toggleMenu }) => {
               </div>
 
               {/* User Dropdown (Desktop) */}
-              {isLoggedIn ? (
+              {isAuthenticated ? (
                 <div className="relative" ref={userDropdownRef}>
                   <button
                     onClick={toggleUserDropdown}
@@ -384,11 +380,9 @@ const Navbar = ({ toggleMenu }) => {
                       </div>
                       <div>
                         <h3 className="font-semibold text-gray-900 ">
-                          John Doe
+                          {user?.name}
                         </h3>
-                        <p className="text-xs text-gray-600 ">
-                          john@iqenergies.com
-                        </p>
+                        <p className="text-xs text-gray-600 ">{user?.email}</p>
                       </div>
                     </div>
 
@@ -417,18 +411,18 @@ const Navbar = ({ toggleMenu }) => {
                         style={{ borderColor: colors.border }}
                       >
                         <div className="flex items-center gap-3">
-                          {userData.avatar ? (
+                          {user?.avatar ? (
                             <img
-                              src={userData.avatar}
-                              alt={userData.name}
+                              src={user.avatar}
+                              alt={user.name}
                               className="w-10 h-10 rounded-full object-cover"
                             />
                           ) : (
                             <div
-                              className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold text-white"
+                              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
                               style={{ backgroundColor: colors.primary }}
                             >
-                              {getInitials(userData.name)}
+                              {getInitials(user?.name)}
                             </div>
                           )}
                           <div>
@@ -436,13 +430,13 @@ const Navbar = ({ toggleMenu }) => {
                               className="font-medium"
                               style={{ color: colors.textColor }}
                             >
-                              {userData.name}
+                              {user?.name}
                             </p>
                             <p
                               className="text-sm opacity-75"
                               style={{ color: colors.muted }}
                             >
-                              {userData.email}
+                              {user?.email}
                             </p>
                           </div>
                         </div>
@@ -544,7 +538,7 @@ const Navbar = ({ toggleMenu }) => {
             </div>
 
             {/* Mobile User Dropdown */}
-            {isLoggedIn && (
+            {isAuthenticated && (
               <div className="relative" ref={mobileUserDropdownRef}>
                 <button
                   onClick={toggleMobileUserDropdown}
@@ -552,10 +546,10 @@ const Navbar = ({ toggleMenu }) => {
                   aria-label="User menu"
                   aria-expanded={mobileUserDropdownOpen}
                 >
-                  {userData.avatar ? (
+                  {user?.avatar ? (
                     <img
-                      src={userData.avatar}
-                      alt={userData.name}
+                      src={user?.avatar}
+                      alt={user?.name}
                       className="w-8 h-8 rounded-full object-cover border-2"
                       style={{ borderColor: colors.primary }}
                     />
@@ -564,18 +558,8 @@ const Navbar = ({ toggleMenu }) => {
                       className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-white relative"
                       style={{ backgroundColor: colors.primary }}
                     >
-                      {getInitials(userData.name)}
-                      {userData.notificationCount > 0 && (
-                        <div
-                          className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-xs"
-                          style={{
-                            backgroundColor: "#EF4444",
-                            color: colors.white,
-                          }}
-                        >
-                          {userData.notificationCount}
-                        </div>
-                      )}
+                      {getInitials(user?.name)}
+                      
                     </div>
                   )}
                 </button>
@@ -597,10 +581,10 @@ const Navbar = ({ toggleMenu }) => {
                       style={{ borderColor: colors.border }}
                     >
                       <div className="flex items-center gap-3">
-                        {userData.avatar ? (
+                        {user?.avatar ? (
                           <img
-                            src={userData.avatar}
-                            alt={userData.name}
+                            src={user?.avatar}
+                            alt={user?.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
@@ -608,7 +592,7 @@ const Navbar = ({ toggleMenu }) => {
                             className="w-12 h-12 rounded-full flex items-center justify-center text-base font-bold text-white"
                             style={{ backgroundColor: colors.primary }}
                           >
-                            {getInitials(userData.name)}
+                            {getInitials(user?.name)}
                           </div>
                         )}
                         <div>
@@ -616,13 +600,13 @@ const Navbar = ({ toggleMenu }) => {
                             className="font-medium"
                             style={{ color: colors.textColor }}
                           >
-                            {userData.name}
+                            {user?.name}
                           </p>
                           <p
                             className="text-sm opacity-75"
                             style={{ color: colors.muted }}
                           >
-                            {userData.email}
+                            {user?.email}
                           </p>
                         </div>
                       </div>

@@ -3,22 +3,23 @@ import { createContext, useState, useEffect, useContext } from "react";
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // user data
-  const [token, setToken] = useState(null); // access token
-  const [loading, setLoading] = useState(true); // initial check
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Check user info from localStorage
+  // 🔐 Restore auth on refresh
   useEffect(() => {
     const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
 
-    if (savedToken) setToken(savedToken);
-    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedToken && savedUser) {
+      setToken(savedToken);
+      setUser(JSON.parse(savedUser));
+    }
 
-    setLoading(false);
+    setLoading(false); // 🔥 important
   }, []);
 
-  // Login function
   const login = (userData, userToken) => {
     setUser(userData);
     setToken(userToken);
@@ -27,7 +28,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", userToken);
   };
 
-  // Logout function
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -44,7 +44,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
-        isAuthenticated: !!token,
+        // ✅ FIX HERE
+        isAuthenticated: !loading && !!token,
       }}
     >
       {children}
@@ -52,7 +53,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// ✅ Custom Hook (This makes everything easy)
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

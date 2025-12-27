@@ -11,22 +11,25 @@ import {
   Mail,
   ChevronDown,
 } from "lucide-react";
+import { useAuth } from "../../context/AuthContext";
 
 const AdminNavbar = ({ setSidebarOpen }) => {
+  const { user, logout } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
 
-  // Dummy user data - replace with your actual user data
-  const userData = {
-    name: "Admin User",
-    email: "admin@example.com",
-    role: "Administrator",
-    avatar: null, // Set to image URL if available
-  };
 
+  const getInitials = (name) => {
+    return name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
   // Dummy notifications - replace with your actual notifications
   const notifications = [
     {
@@ -60,7 +63,10 @@ const AdminNavbar = ({ setSidebarOpen }) => {
       if (profileRef.current && !profileRef.current.contains(event.target)) {
         setShowProfileMenu(false);
       }
-      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
+      ) {
         setShowNotifications(false);
       }
     };
@@ -70,9 +76,8 @@ const AdminNavbar = ({ setSidebarOpen }) => {
   }, []);
 
   const handleLogout = () => {
-    console.log("Logging out...");
-    // Add your logout logic here
-    navigate("/signin");
+    logout();
+    navigate("/");
   };
 
   const handleProfileClick = () => {
@@ -130,7 +135,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                 <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-2xl border border-gray-200 overflow-hidden animate-fadeIn">
                   <div className="bg-gray-900 px-4 py-3">
                     <h3 className="text-white font-semibold">Notifications</h3>
-                    <p className="text-gray-300 text-xs">{unreadCount} unread messages</p>
+                    <p className="text-gray-300 text-xs">
+                      {unreadCount} unread messages
+                    </p>
                   </div>
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.map((notification) => (
@@ -175,9 +182,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                 className="flex items-center space-x-3 p-2 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors border border-gray-200 hover:border-gray-900"
               >
                 <div className="w-9 h-9 bg-gray-900 rounded-full flex items-center justify-center shadow-sm">
-                  {userData.avatar ? (
+                  {user?.avatar ? (
                     <img
-                      src={userData.avatar}
+                      src={user?.avatar}
                       alt="Profile"
                       className="w-full h-full rounded-full object-cover"
                     />
@@ -187,9 +194,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                 </div>
                 <div className="hidden sm:block text-left">
                   <p className="text-sm font-semibold text-gray-900">
-                    {userData.name}
+                    {user?.name}
                   </p>
-                  <p className="text-xs text-gray-600">{userData.role}</p>
+                  <p className="text-xs text-gray-600">{user?.role}</p>
                 </div>
                 <ChevronDown
                   className={`w-4 h-4 text-gray-600 transition-transform hidden sm:block ${
@@ -205,9 +212,9 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                   <div className="bg-gray-900 px-4 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center">
-                        {userData.avatar ? (
+                        {user?.avatar ? (
                           <img
-                            src={userData.avatar}
+                            src={user?.avatar}
                             alt="Profile"
                             className="w-full h-full rounded-full object-cover"
                           />
@@ -217,9 +224,11 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                       </div>
                       <div className="flex-1">
                         <p className="text-white font-semibold text-sm">
-                          {userData.name}
+                          {user?.name}
                         </p>
-                        <p className="text-gray-300 text-xs">{userData.email}</p>
+                        <p className="text-gray-300 text-xs">
+                          {user?.email}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -260,9 +269,7 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                       </div>
                     </button>
 
-                    <button
-                      className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-100 transition-colors text-left"
-                    >
+                    <button className="w-full px-4 py-3 flex items-center space-x-3 hover:bg-gray-100 transition-colors text-left">
                       <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
                         <Mail className="w-4 h-4 text-gray-900" />
                       </div>

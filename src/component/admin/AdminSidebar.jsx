@@ -45,6 +45,81 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       path: "/admin/profile",
     },
     {
+      id: "banners-management",
+      label: "Banners Management",
+      icon: <Mail className="w-5 h-5" />,
+      path: "/admin/handle-banner",
+    },
+    {
+      id: "about-us",
+      label: "About Us Management",
+      icon: <Star className="w-5 h-5" />,
+      children: [
+        {
+          id: "hero-section",
+          label: "Hero Section",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-about/hero-section",
+        },
+        {
+          id: "who-we-are",
+          label: "Who We Are",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-about/who-we-are",
+        },
+        {
+          id: "features",
+          label: "Features",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-about/features",
+        },
+        {
+          id: "mission-vision",
+          label: "Mission & Vision",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-about/mission-vision",
+        },
+        {
+          id: "cta",
+          label: "Call To Action",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-about/cta",
+        }
+      ],
+    },
+    {
+      id: "what-we-do",
+      label: "What We Do Management",
+      icon: <Globe className="w-5 h-5" />,
+      children: [
+        {
+          id: "list-services",
+          label: "List of Services",
+          icon: <Database className="w-4 h-4" />,
+          path: "/admin/handle-what-we-do/list-services",
+        },
+        {
+          id : "hero-section",
+          label: "Hero Section",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-what-we-do/hero-section",
+        }
+      ],
+    },
+    {
+      id: "our-solutions",
+      label: "Our Solutions Management",
+      icon: <Package className="w-5 h-5" />,
+      children: [
+        {
+          id: "list-solutions",
+          label: "List of Solutions",
+          icon: <Database className="w-4 h-4" />,
+          path: "/admin/handle-our-solutions/list-solutions",
+        }
+      ]
+    },
+    {
       id: "users",
       label: "Users Management",
       icon: <Users className="w-5 h-5" />,
@@ -66,99 +141,6 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "Permissions",
           icon: <Shield className="w-4 h-4" />,
           path: "/admin/users/permissions",
-        },
-      ],
-    },
-    {
-      id: "products",
-      label: "Products",
-      icon: <Package className="w-5 h-5" />,
-      children: [
-        {
-          id: "all-products",
-          label: "All Products",
-          icon: <Package className="w-4 h-4" />,
-          path: "/admin/products/all",
-        },
-        {
-          id: "categories",
-          label: "Categories",
-          icon: <Tag className="w-4 h-4" />,
-          path: "/admin/products/categories",
-        },
-        {
-          id: "inventory",
-          label: "Inventory",
-          icon: <Database className="w-4 h-4" />,
-          path: "/admin/products/inventory",
-        },
-      ],
-    },
-    {
-      id: "orders",
-      label: "Orders",
-      icon: <ShoppingCart className="w-5 h-5" />,
-      path: "/admin/orders",
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: <BarChart className="w-5 h-5" />,
-      children: [
-        {
-          id: "overview",
-          label: "Overview",
-          icon: <TrendingUp className="w-4 h-4" />,
-          path: "/admin/analytics/overview",
-        },
-        {
-          id: "sales",
-          label: "Sales Analytics",
-          icon: <DollarSign className="w-4 h-4" />,
-          path: "/admin/analytics/sales",
-        },
-        {
-          id: "user-behavior",
-          label: "User Behavior",
-          icon: <Users className="w-4 h-4" />,
-          path: "/admin/analytics/behavior",
-        },
-      ],
-    },
-    {
-      id: "reports",
-      label: "Reports",
-      icon: <FileText className="w-5 h-5" />,
-      path: "/admin/reports",
-    },
-    {
-      id: "settings",
-      label: "Settings",
-      icon: <Settings className="w-5 h-5" />,
-      children: [
-        {
-          id: "SiteSettings",
-          label: "Site Setting",
-          icon: <Settings className="w-4 h-4" />,
-          path: "/admin/site-settings",
-        },
-        {
-          id: "appearance",
-          label: "Appearance",
-          icon: <Palette className="w-4 h-4" />,
-          path: "/admin/settings/appearance",
-        },
-        {
-          id: "notifications",
-          label: "Notifications",
-          icon: <Bell className="w-4 h-4" />,
-          path: "/admin/settings/notifications",
-        },
-        {
-          id: "integrations",
-          label: "Integrations",
-          icon: <Globe className="w-4 h-4" />,
-          path: "/admin/settings/integrations",
         },
       ],
     },
@@ -247,7 +229,11 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
                   <div
                     className={`transition-transform duration-200 ${
                       openDropdowns[item.id] ? "rotate-180" : ""
-                    } ${isParentActive(item.children) ? "text-white" : "text-gray-600"}`}
+                    } ${
+                      isParentActive(item.children)
+                        ? "text-white"
+                        : "text-gray-600"
+                    }`}
                   >
                     <ChevronDown className="w-4 h-4" />
                   </div>

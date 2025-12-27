@@ -20,48 +20,86 @@ import SolutionDetails from "./pages/solution/SolutionDetails";
 import AddToCartPage from "./pages/product/AddToCartPage";
 import ProfilePage from "./pages/about/ProfilePage";
 import MyOrderPage from "./pages/order/MyOrderPage";
-import MyOrderDetails from "./pages/order/OrderTrackingPage";
 import OrderTrackingPage from "./pages/order/OrderTrackingPage";
+import {
+  GuestRoute,
+  PublicUserRoute,
+  PrivateUserRoute,
+  AdminRoute,
+} from "./routes/ProtectedRoutes";
+import HandleBanner from "./pages/admin/landing_page/HandleBanner";
+import HandleAboutHero from "./pages/admin/about/HandleAboutHero";
+import HandleWhoWeAre from "./pages/admin/about/HandleWhoWeAre";
+import HandleAboutFeatures from "./pages/admin/about/HandleAboutFeatures";
+import HandleAboutMission from "./pages/admin/about/HandleAboutMission";
+import HandleAboutCta from "./pages/admin/about/HandleAboutCta";
+import HandleWhatWeDoList from "./pages/admin/waht_we_do/HandleWhatWeDoList";
+import HandleWhatWeDoHero from "./pages/admin/waht_we_do/HandleWhatWeDoHero";
+import HandleOurSolutionItems from "./pages/admin/our_solution/HandleOurSolutionItems";
 
 const App = () => {
+
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-
-        <Route element={<AppLayout />}>
-          <Route index path="/" element={<LandingPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/about" element={<AboutUsPage />} />
-
-          <Route path="/products" element={<ProductPage />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/cart" element={<AddToCartPage />} />
-          <Route path="/orders" element={<MyOrderPage />} />
-          <Route path="/orders/:slug" element={<OrderTrackingPage />} />
-
-          <Route path="/services/:slug" element={<ServicesDetails />} />
-          <Route path="/solution/:slug" element={<SolutionDetails />} />
-
-
-
-          <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/order-success" element={<OrderSuccessPage />} />
-
-
-
-          <Route path="/brochure" element={<BrochurePage />} />
-          <Route path="/certificate" element={<CertificatePage />} />
-
+        {/* ---------- LOGIN / REGISTER ---------- */}
+        <Route element={<GuestRoute />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
         </Route>
 
-        {/* Admin Layout */}
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          {/* Additional admin routes can be added here */}
-          <Route path="site-settings" element={<SiteSettings />} />
-          <Route path="profile" element={<AdminProfile />} />
+       
+
+        {/* ---------- PUBLIC USER ROUTES ---------- */}
+        <Route element={<PublicUserRoute />}>
+          <Route element={<AppLayout />}>
+            <Route index path="/" element={<LandingPage />} />
+            <Route path="/about" element={<AboutUsPage />} />
+            <Route path="/products" element={<ProductPage />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/services/:slug" element={<ServicesDetails />} />
+            <Route path="/solution/:slug" element={<SolutionDetails />} />
+            <Route path="/cart" element={<AddToCartPage />} />
+
+            <Route path="/brochure" element={<BrochurePage />} />
+            <Route path="/certificate" element={<CertificatePage />} />
+          </Route>
+        </Route>
+
+        {/* ---------- PRIVATE USER ROUTES ---------- */}
+        <Route element={<PrivateUserRoute />}>
+          <Route element={<AppLayout />}>
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/orders" element={<MyOrderPage />} />
+            <Route path="/orders/:slug" element={<OrderTrackingPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/order-success" element={<OrderSuccessPage />} />
+          </Route>
+        </Route>
+
+        {/* ---------- ADMIN ROUTES ---------- */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="site-settings" element={<SiteSettings />} />
+            <Route path="profile" element={<AdminProfile />} />
+
+            <Route path="handle-banner" element={<HandleBanner />} />
+            <Route path="handle-about/hero-section" element={<HandleAboutHero />} />
+            <Route path="handle-about/who-we-are" element={<HandleWhoWeAre />} />
+            <Route path="handle-about/features" element={<HandleAboutFeatures />} />
+            <Route path="handle-about/mission-vision" element={<HandleAboutMission />} />
+            <Route path="handle-about/cta" element={<HandleAboutCta />} />
+
+            <Route path="handle-what-we-do/list-services" element={<HandleWhatWeDoList />} />
+            <Route path="handle-what-we-do/hero-section" element={<HandleWhatWeDoHero />} />
+
+            <Route path="handle-our-solutions/list-solutions" element={<HandleOurSolutionItems />} />
+            {/* <Route path="handle-our-solutions/list-solutions" element={<HandleOurSolutionItems />} /> */}
+
+
+
+          </Route>
         </Route>
       </Routes>
     </Router>

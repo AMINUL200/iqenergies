@@ -2,11 +2,15 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
+import { toast } from "react-toastify";
+import { api } from "../../utils/app";
+import { useAuth } from "../../context/AuthContext";
 
 const LoginPage = () => {
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: "",
-    password: "",
+    email: "admin@iqenergies.com",
+    password: "admin123",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -39,17 +43,27 @@ const LoginPage = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (validateForm()) {
       setIsLoading(true);
 
-      setTimeout(() => {
-        console.log("Login data:", formData);
-        setIsLoading(false);
-        // navigate("/dashboard");
-      }, 1500);
+      try {
+        const response = await api.post("/login", formData);
+        const { token, user } = response.data;
+        login(user, token);
+        toast.success("Login successful!");
+        console.log("Logged in user:", user);
+        if (user.role === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/");
+        }
+      } catch (error) {
+        console.error("Login error:", error);
+        toast.error(error.message || "Login failed. Please try again.");
+      }
     }
   };
 
@@ -94,9 +108,7 @@ const LoginPage = () => {
             <h2 className="text-3xl font-bold text-[#1F2933] mb-2">
               Welcome Back
             </h2>
-            <p className="text-[#6B7280]">
-              Sign in to continue to IQEnergies
-            </p>
+            <p className="text-[#6B7280]">Sign in to continue to IQEnergies</p>
           </div>
 
           {/* Login Form */}
