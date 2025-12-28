@@ -84,7 +84,7 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "Call To Action",
           icon: <Clock className="w-4 h-4" />,
           path: "/admin/handle-about/cta",
-        }
+        },
       ],
     },
     {
@@ -99,11 +99,11 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           path: "/admin/handle-what-we-do/list-services",
         },
         {
-          id : "hero-section",
+          id: "hero-section",
           label: "Hero Section",
           icon: <Clock className="w-4 h-4" />,
           path: "/admin/handle-what-we-do/hero-section",
-        }
+        },
       ],
     },
     {
@@ -116,6 +116,31 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "List of Solutions",
           icon: <Database className="w-4 h-4" />,
           path: "/admin/handle-our-solutions/list-solutions",
+        },
+        {
+          id: "hero-section",
+          label: "Hero Section",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-our-solutions/hero-section",
+        },
+      ],
+    },
+    {
+      id: "business-solutions",
+      label: "Business Solutions",
+      icon: <TrendingUp className="w-5 h-5" />,
+      children: [
+        {
+          id: "hero-section",
+          label: "Hero Section",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-business-solutions/hero-section",
+        },
+        {
+          id: "list-solutions",
+          label: "List of Solutions",
+          icon: <Database className="w-4 h-4" />,
+          path: "/admin/handle-business-solutions/list-solutions",
         }
       ]
     },

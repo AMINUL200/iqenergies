@@ -36,6 +36,9 @@ import HandleAboutCta from "./pages/admin/about/HandleAboutCta";
 import HandleWhatWeDoList from "./pages/admin/waht_we_do/HandleWhatWeDoList";
 import HandleWhatWeDoHero from "./pages/admin/waht_we_do/HandleWhatWeDoHero";
 import HandleOurSolutionItems from "./pages/admin/our_solution/HandleOurSolutionItems";
+import HandleOurSolutionHero from "./pages/admin/our_solution/HandleOurSolutionHero";
+import HandleBusinessHero from "./pages/admin/business_solutions/HandleBusinessHero";
+import HandleBusinessList from "./pages/admin/business_solutions/HandleBusinessList";
 
 const App = () => {
 
@@ -95,7 +98,10 @@ const App = () => {
             <Route path="handle-what-we-do/hero-section" element={<HandleWhatWeDoHero />} />
 
             <Route path="handle-our-solutions/list-solutions" element={<HandleOurSolutionItems />} />
-            {/* <Route path="handle-our-solutions/list-solutions" element={<HandleOurSolutionItems />} /> */}
+            <Route path="handle-our-solutions/hero-section" element={<HandleOurSolutionHero />} />
+
+            <Route path="handle-business-solutions/hero-section" element={<HandleBusinessHero />} />
+            <Route path="handle-business-solutions/list-solutions" element={<HandleBusinessList />} />
 
 
 

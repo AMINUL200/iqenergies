@@ -10,7 +10,6 @@ import {
   X,
   Eye,
   EyeOff,
-  Link as LinkIcon,
 } from "lucide-react";
 import { api } from "../../../utils/app";
 import AdminLoader from "../../../component/admin/AdminLoader";
@@ -25,7 +24,6 @@ const HandleOurSolutionItems = () => {
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
-    slug: "",
     description: "",
     sort_order: 1,
     is_active: "1",
@@ -59,37 +57,12 @@ const HandleOurSolutionItems = () => {
         ...prev,
         [name]: e.target.checked ? "1" : "0",
       }));
-    } else if (name === "title") {
-      // Auto-generate slug from title if slug is empty or we're creating new
-      const newSlug = value
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-
-      setFormData((prev) => ({
-        ...prev,
-        title: value,
-        slug: editingId ? prev.slug : newSlug, // Only auto-generate for new items
-      }));
     } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
     }
-  };
-
-  const handleSlugChange = (e) => {
-    const slug = e.target.value
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, "")
-      .replace(/--+/g, "-")
-      .replace(/(^-|-$)/g, "");
-
-    setFormData((prev) => ({
-      ...prev,
-      slug: slug,
-    }));
   };
 
   const handleAddNew = () => {
@@ -100,7 +73,6 @@ const HandleOurSolutionItems = () => {
 
     setFormData({
       title: "",
-      slug: "",
       description: "",
       sort_order: maxSortOrder + 1,
       is_active: "1",
@@ -112,7 +84,6 @@ const HandleOurSolutionItems = () => {
   const handleEdit = (solution) => {
     setFormData({
       title: solution.title || "",
-      slug: solution.slug || "",
       description: solution.description || "",
       sort_order: solution.sort_order || 1,
       is_active: solution.is_active ? "1" : "0",
@@ -129,21 +100,16 @@ const HandleOurSolutionItems = () => {
       setError(null);
       setSuccess(null);
 
-      const formDataToSend = new FormData();
+      // Create JSON data instead of FormData since we're not uploading files
+      const data = {
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        sort_order: parseInt(formData.sort_order),
+        is_active: parseInt(formData.is_active),
+      };
 
-      // Append all form fields
-      Object.keys(formData).forEach((key) => {
-        const value = formData[key];
-        if (value !== null && value !== undefined && value !== "") {
-          formDataToSend.append(key, value);
-        }
-      });
-
-      // Log form data for debugging
-      console.log(
-        "Form data to send:",
-        Object.fromEntries(formDataToSend.entries())
-      );
+      // Log data for debugging
+      console.log("Data to send:", data);
 
       // Use POST for both create and update
       const endpoint = editingId
@@ -152,24 +118,29 @@ const HandleOurSolutionItems = () => {
 
       const method = editingId ? "put" : "post";
 
-      const response = await api[method](endpoint, formDataToSend);
+      const response = await api[method](endpoint, data);
 
       if (response.data.success) {
         setSuccess(
           response.data.message ||
             `Solution ${editingId ? "updated" : "created"} successfully!`
         );
+        
         // Refresh solutions list and reset form
-        fetchSolutions();
+        await fetchSolutions();
         setShowForm(false);
         setEditingId(null);
         setFormData({
           title: "",
-          slug: "",
           description: "",
           sort_order: 1,
           is_active: "1",
         });
+
+        // Auto-clear success message after 5 seconds
+        setTimeout(() => {
+          setSuccess(null);
+        }, 5000);
       } else {
         setError(
           response.data.message ||
@@ -179,14 +150,27 @@ const HandleOurSolutionItems = () => {
         );
       }
     } catch (err) {
-      const errorMessage =
-        err.response?.data?.message ||
-        err.response?.data?.error ||
-        `Failed to ${
-          editingId ? "update" : "create"
-        } solution. Please try again.`;
-      setError(errorMessage);
       console.error("Error saving solution:", err.response?.data || err);
+      
+      // Handle validation errors
+      if (err.response?.data?.errors) {
+        const errors = err.response.data.errors;
+        let errorMessage = "Validation failed:\n";
+        
+        Object.keys(errors).forEach((key) => {
+          errorMessage += `${key}: ${errors[key].join(", ")}\n`;
+        });
+        
+        setError(errorMessage);
+      } else {
+        const errorMessage =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          `Failed to ${
+            editingId ? "update" : "create"
+          } solution. Please try again.`;
+        setError(errorMessage);
+      }
     } finally {
       setSaving(false);
     }
@@ -199,14 +183,19 @@ const HandleOurSolutionItems = () => {
 
     try {
       setError(null);
-      await api.delete(`/admin/our-solution-items/${id}`);
-      setSuccess("Solution deleted successfully!");
-      fetchSolutions();
+      const response = await api.delete(`/admin/our-solution-items/${id}`);
+      
+      if (response.data.success) {
+        setSuccess("Solution deleted successfully!");
+        await fetchSolutions();
 
-      // Auto-clear success message after 5 seconds
-      setTimeout(() => {
-        setSuccess(null);
-      }, 5000);
+        // Auto-clear success message after 5 seconds
+        setTimeout(() => {
+          setSuccess(null);
+        }, 5000);
+      } else {
+        setError(response.data.message || "Failed to delete solution.");
+      }
     } catch (err) {
       setError("Failed to delete solution. Please try again.");
       console.error("Error deleting solution:", err);
@@ -216,16 +205,21 @@ const HandleOurSolutionItems = () => {
   const handleStatusToggle = async (id, currentStatus) => {
     try {
       setError(null);
-      await api.put(`/admin/solutions/${id}/status`, {
-        is_active: currentStatus === 1 ? 0 : 1,
+      const response = await api.put(`/admin/our-solution-items/${id}/status`, {
+        is_active: currentStatus ? 0 : 1,
       });
-      setSuccess("Status updated successfully!");
-      fetchSolutions();
+      
+      if (response.data.success) {
+        setSuccess("Status updated successfully!");
+        await fetchSolutions();
 
-      // Auto-clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(null);
-      }, 3000);
+        // Auto-clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccess(null);
+        }, 3000);
+      } else {
+        setError(response.data.message || "Failed to update status.");
+      }
     } catch (err) {
       setError("Failed to update status. Please try again.");
       console.error("Error updating status:", err);
@@ -235,14 +229,19 @@ const HandleOurSolutionItems = () => {
   const handleSortOrder = async (id, direction) => {
     try {
       setError(null);
-      await api.put(`/admin/solutions/${id}/sort`, { direction });
-      setSuccess("Sort order updated!");
-      fetchSolutions();
+      const response = await api.put(`/admin/our-solution-items/${id}/sort`, { direction });
+      
+      if (response.data.success) {
+        setSuccess("Sort order updated!");
+        await fetchSolutions();
 
-      // Auto-clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(null);
-      }, 3000);
+        // Auto-clear success message after 3 seconds
+        setTimeout(() => {
+          setSuccess(null);
+        }, 3000);
+      } else {
+        setError(response.data.message || "Failed to update sort order.");
+      }
     } catch (err) {
       setError("Failed to update sort order. Please try again.");
       console.error("Error updating sort order:", err);
@@ -267,14 +266,14 @@ const HandleOurSolutionItems = () => {
         {/* Success Message */}
         {success && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-700">{success}</p>
+            <p className="text-green-700 whitespace-pre-line">{success}</p>
           </div>
         )}
 
         {/* Error Message */}
         {error && (
           <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700 whitespace-pre-line">{error}</p>
           </div>
         )}
 
@@ -292,7 +291,6 @@ const HandleOurSolutionItems = () => {
                     setEditingId(null);
                     setFormData({
                       title: "",
-                      slug: "",
                       description: "",
                       sort_order: 1,
                       is_active: "1",
@@ -323,30 +321,6 @@ const HandleOurSolutionItems = () => {
                       />
                       <p className="text-xs text-gray-500 mt-2">
                         Display title for the solution
-                      </p>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-900 mb-2">
-                        Slug *
-                      </label>
-                      <div className="relative">
-                        <div className="absolute left-3 top-3 text-gray-400">
-                          <LinkIcon className="w-5 h-5" />
-                        </div>
-                        <input
-                          type="text"
-                          name="slug"
-                          value={formData.slug}
-                          onChange={handleSlugChange}
-                          required
-                          className="w-full pl-10 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
-                          placeholder="e.g., wind-energy-solutions"
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        URL-friendly identifier. Auto-generated from title, but
-                        can be customized
                       </p>
                     </div>
 
@@ -438,12 +412,6 @@ const HandleOurSolutionItems = () => {
                               "Solution description will appear here..."}
                           </p>
                           <div className="flex items-center space-x-4">
-                            <div className="text-sm text-gray-500 flex items-center">
-                              <LinkIcon className="w-4 h-4 mr-1" />
-                              <span className="font-mono text-xs">
-                                /{formData.slug || "solution-slug"}
-                              </span>
-                            </div>
                             <div
                               className={`text-xs font-medium px-3 py-1 rounded-full ${
                                 formData.is_active === "1"
@@ -473,7 +441,6 @@ const HandleOurSolutionItems = () => {
                       setEditingId(null);
                       setFormData({
                         title: "",
-                        slug: "",
                         description: "",
                         sort_order: 1,
                         is_active: "1",
@@ -553,9 +520,6 @@ const HandleOurSolutionItems = () => {
                       Title
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Slug
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       Description
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
@@ -605,14 +569,6 @@ const HandleOurSolutionItems = () => {
                         <td className="px-6 py-4">
                           <div className="text-sm font-medium text-gray-900">
                             {solution.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <LinkIcon className="w-3 h-3 text-gray-400 mr-1" />
-                            <div className="text-sm text-gray-600 font-mono">
-                              {solution.slug}
-                            </div>
                           </div>
                         </td>
                         <td className="px-6 py-4">
