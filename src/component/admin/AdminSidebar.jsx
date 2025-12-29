@@ -145,6 +145,31 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       ]
     },
     {
+      id: "service-management",
+      label: "Service Management",
+      icon: <Settings className="w-5 h-5" />,
+      children: [
+        {
+          id: "hero-section",
+          label: "Hero Section",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-services/hero-section",
+        },
+        {
+          id: "list-services",
+          label: "List of Services",
+          icon: <Database className="w-4 h-4" />,
+          path: "/admin/handle-services/list-services",
+        }
+      ]
+    },
+    {
+      id: "site-settings",
+      label: "Site Settings",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/site-settings",
+    },
+    {
       id: "users",
       label: "Users Management",
       icon: <Users className="w-5 h-5" />,

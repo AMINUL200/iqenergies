@@ -11,11 +11,15 @@ import ServicesSection from "../../component/landingpage/ServicesSection";
 import ContactUsSection from "../../component/landingpage/ContactUsSection";
 import SolarInverterSection from "../../component/landingpage/SolarInverterSection";
 import PageLoader from "../../component/common/PageLoader";
+import { useLandingData } from "../../routes/useLandingData";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
+   const { data, loading, errors } = useLandingData();
+   console.log("Landing page data:", data, "Errors:", errors);
+  
 
   const location = useLocation();
 
@@ -59,7 +63,7 @@ const LandingPage = () => {
   }, []);
 
   if (loading) {
-    return <PageLoader/>; 
+    return <PageLoader />;
   }
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Save, Loader2 } from "lucide-react";
 import { api } from "../../../utils/app";
 import AdminLoader from "../../../component/admin/AdminLoader";
+import CustomTextEditor from "../../../component/form/TextEditor";
 
 const HandleAboutHero = () => {
   const [heroData, setHeroData] = useState(null);
@@ -97,6 +98,13 @@ const HandleAboutHero = () => {
     }
   };
 
+  const handleEditorChange = (content) => {
+    setFormData((prev) => ({
+      ...prev,
+      description: content,
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -130,15 +138,15 @@ const HandleAboutHero = () => {
 
       const response = await api.post(endpoint, formDataToSend);
 
-
-
       if (response.data.status) {
         // Refresh data to reflect any changes
         fetchHeroData();
         setSuccess(response.data.message || "Hero section saved successfully!");
-      }else{
-        setError(response.data.message || "Failed to save hero section. Please try again.");
-
+      } else {
+        setError(
+          response.data.message ||
+            "Failed to save hero section. Please try again."
+        );
       }
     } catch (err) {
       const errorMessage =
@@ -153,7 +161,7 @@ const HandleAboutHero = () => {
   };
 
   if (loading) {
-    return<AdminLoader />;
+    return <AdminLoader />;
   }
 
   return (
@@ -277,14 +285,12 @@ const HandleAboutHero = () => {
                   <label className="block text-sm font-medium text-gray-900 mb-2">
                     Description *
                   </label>
-                  <textarea
-                    name="description"
+                  
+                  <CustomTextEditor 
                     value={formData.description}
-                    onChange={handleInputChange}
-                    required
-                    rows={6}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400 resize-none"
+                    onChange={handleEditorChange}
                     placeholder="Main description text for the hero section"
+                    height={300}
                   />
                 </div>
 
@@ -424,8 +430,6 @@ const HandleAboutHero = () => {
                 </div>
               </div>
             </div>
-
-          
 
             {/* Submit Button */}
             <div className="flex justify-end pt-6 border-t border-gray-200">

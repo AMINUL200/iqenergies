@@ -6,7 +6,7 @@ import AppLayout from "./layout/AppLayout";
 import LandingPage from "./pages/landing/LandingPage";
 import AdminLayout from "./layout/AdminLayout";
 import AdminDashboard from "./pages/admin/dashboard/AdminDashboard";
-import SiteSettings from "./pages/admin/settings/SiteSettings";
+// import SiteSettings from "./pages/admin/settings/SiteSettings";
 import AdminProfile from "./pages/admin/profile/AdminProfile";
 import AboutUsPage from "./pages/about/AboutUsPage";
 import ProductDetails from "./pages/product/ProductDetails";
@@ -39,6 +39,9 @@ import HandleOurSolutionItems from "./pages/admin/our_solution/HandleOurSolution
 import HandleOurSolutionHero from "./pages/admin/our_solution/HandleOurSolutionHero";
 import HandleBusinessHero from "./pages/admin/business_solutions/HandleBusinessHero";
 import HandleBusinessList from "./pages/admin/business_solutions/HandleBusinessList";
+import HandleServiceHero from "./pages/admin/service/HandleServiceHero";
+import HandleServiceReview from "./pages/admin/service/HandleServiceReview";
+import SiteSettings from "./pages/admin/setting/SiteSettings";
 
 const App = () => {
 
@@ -84,7 +87,7 @@ const App = () => {
         <Route element={<AdminRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
-            <Route path="site-settings" element={<SiteSettings />} />
+            {/* <Route path="site-settings" element={<SiteSettings />} /> */}
             <Route path="profile" element={<AdminProfile />} />
 
             <Route path="handle-banner" element={<HandleBanner />} />
@@ -102,6 +105,11 @@ const App = () => {
 
             <Route path="handle-business-solutions/hero-section" element={<HandleBusinessHero />} />
             <Route path="handle-business-solutions/list-solutions" element={<HandleBusinessList />} />
+
+            <Route path="handle-services/hero-section" element={<HandleServiceHero />} />
+            <Route path="handle-services/list-services" element={<HandleServiceReview />} />
+
+            <Route path="site-settings" element={<SiteSettings />} />
 
 
 

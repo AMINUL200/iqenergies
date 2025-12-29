@@ -30,3 +30,10 @@
     background: linear-gradient(180deg, #2563eb, #4f46e5);
     /* Darker hover */
 }
+
+
+
+.editor-content,
+.editor-content * {
+  color: rgb(209 213 219) !important; /* Tailwind gray-300 */
+}

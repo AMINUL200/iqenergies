@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Save, Loader2 } from "lucide-react";
 import { api } from "../../../utils/app";
 import AdminLoader from "../../../component/admin/AdminLoader";
+import CustomTextEditor from "../../../component/form/TextEditor";
 
 const HandleWhoWeAre = () => {
   const [whoWeAreData, setWhoWeAreData] = useState(null);
@@ -21,6 +22,12 @@ const HandleWhoWeAre = () => {
   useEffect(() => {
     fetchWhoWeAreData();
   }, []);
+  const handleEditorChange = (content) => {
+    setFormData((prev) => ({
+      ...prev,
+      description: content,
+    }));
+  };
 
   const fetchWhoWeAreData = async () => {
     try {
@@ -102,9 +109,10 @@ const HandleWhoWeAre = () => {
         setSuccess(
           response.data.message || '"Who We Are" section saved successfully!'
         );
-      }else{
+      } else {
         setError(
-          response.data.message || 'Failed to save "Who We Are" section. Please try again.'
+          response.data.message ||
+            'Failed to save "Who We Are" section. Please try again.'
         );
       }
     } catch (err) {
@@ -246,7 +254,7 @@ const HandleWhoWeAre = () => {
                   <label className="block text-sm font-medium text-gray-900 mb-2">
                     Description *
                   </label>
-                  <textarea
+                  {/* <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
@@ -254,6 +262,12 @@ const HandleWhoWeAre = () => {
                     rows={10}
                     className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400 resize-none"
                     placeholder="Main description text for the section"
+                  /> */}
+                  <CustomTextEditor
+                    value={formData.description}
+                    onChange={handleEditorChange}
+                    placeholder="Detailed description about your company"
+                    height={300}
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Detailed description about your company
@@ -276,8 +290,6 @@ const HandleWhoWeAre = () => {
                 </div>
               </div>
             </div>
-
-          
 
             {/* Submit Button */}
             <div className="flex justify-end pt-6 border-t border-gray-200">
@@ -303,8 +315,6 @@ const HandleWhoWeAre = () => {
             </div>
           </form>
         </div>
-
-       
       </div>
     </div>
   );

@@ -542,7 +542,7 @@ const HandleBanner = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {banners.map((banner) => (
+                  {banners?.map((banner) => (
                     <tr 
                       key={banner.id} 
                       className="hover:bg-gray-50 transition-colors duration-150"
