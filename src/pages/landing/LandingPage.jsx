@@ -69,28 +69,28 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-white pt-10">
       {/* Hero Section */}
-      <HeroSection />
+      <HeroSection heroData={data.hero} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
       </section>
 
       {/* about us section */}
-      <AboutSection />
+      <AboutSection aboutData={data.about}/>
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
       </section>
 
       {/* what we do */}
-      <WhatWeDoSection />
+      <WhatWeDoSection whatData={data.whatWeDo} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
       </section>
 
       {/* solutions */}
-      <SolutionsSection />
+      <SolutionsSection solutionData={data.solution} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>

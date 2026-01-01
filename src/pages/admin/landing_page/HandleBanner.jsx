@@ -35,7 +35,8 @@ const HandleBanner = () => {
       setLoading(true);
       setError(null);
       const response = await api.get('/banners');
-      setBanners(response.data);
+      console.log("banner data: ", response.data)
+      setBanners(response.data.data);
     } catch (err) {
       setError('Failed to fetch banners. Please try again.');
       console.error('Error fetching banners:', err);
@@ -166,7 +167,7 @@ const HandleBanner = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this banner?')) {
       try {
-        await api.delete(`/banners/${id}`);
+        await api.delete(`/admin/banners/${id}`);
         fetchBanners();
       } catch (err) {
         setError('Failed to delete banner. Please try again.');

@@ -6,25 +6,16 @@ export const normalizeApiResponse = (key, response) => {
   switch (key) {
     case "hero":
       // hero sometimes: data, data[0]
-      return raw?.data?.[0] || raw?.data || raw || null;
+      return raw?.data || null;
 
     case "about":
-      return raw?.data?.[0] || raw?.data || raw || null;
+      return raw?.data?.hero || null;
 
-    case "products":
-      // must be array
-      return Array.isArray(raw?.data)
-        ? raw.data
-        : Array.isArray(raw?.data?.data)
-        ? raw.data.data
-        : [];
+    case "whatWeDo":
+      return raw?.data || null;
 
-    case "services":
-      return Array.isArray(raw?.data)
-        ? raw.data
-        : Array.isArray(raw?.data?.data)
-        ? raw.data.data
-        : [];
+    case "solution":
+      return raw?.data || null;
 
     default:
       return raw?.data || raw || null;

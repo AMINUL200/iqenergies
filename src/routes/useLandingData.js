@@ -9,8 +9,8 @@ export const useLandingData = () => {
   const [data, setData] = useState({
     hero: null,
     about: null,
-    products: [],
-    services: [],
+    whatWeDo: [],
+    solution: [],
   });
 
   const [loading, setLoading] = useState(true);
@@ -23,8 +23,8 @@ export const useLandingData = () => {
       const requests = {
         hero: api.get(`${API_URL}/banners`),
         about: api.get(`${API_URL}/about`),
-        // products: axios.get(`${API_URL}/products`),
-        // services: axios.get(`${API_URL}/services`),
+        whatWeDo: api.get(`${API_URL}/what-we-all`),
+        solution:api.get(`${API_URL}/our-solution-all`),
       };
 
       const results = await Promise.allSettled(
