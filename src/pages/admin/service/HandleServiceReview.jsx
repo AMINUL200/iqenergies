@@ -1,7 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Loader2, Plus, Edit2, Trash2, ChevronUp, ChevronDown, X, Eye, EyeOff, Image as ImageIcon } from 'lucide-react';
-import { api } from '../../../utils/app';
-import AdminLoader from '../../../component/admin/AdminLoader';
+import React, { useState, useEffect } from "react";
+import {
+  Save,
+  Loader2,
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Eye,
+  EyeOff,
+  Image as ImageIcon,
+} from "lucide-react";
+import { api } from "../../../utils/app";
+import AdminLoader from "../../../component/admin/AdminLoader";
+import CustomTextEditor from "../../../component/form/TextEditor";
 
 const HandleServiceReview = () => {
   const [serviceReviews, setServiceReviews] = useState([]);
@@ -12,19 +25,33 @@ const HandleServiceReview = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    heading: '',
-    highlighted_text: '',
-    heading_meta: '',
-    description: '',
-    heading2: '',
-    description2: '',
-    web_image_alt: '',
-    mobile_image_alt: '',
+    heading: "",
+    highlighted_text: "",
+    heading_meta: "",
+    description: "",
+    heading2: "",
+    description2: "",
+    web_image_alt: "",
+    mobile_image_alt: "",
     web_image: null,
     mobile_image: null,
-    web_image_preview: '',
-    mobile_image_preview: '',
+    web_image_preview: "",
+    mobile_image_preview: "",
     is_active: 1,
+  });
+
+  const [showFeatureForm, setShowFeatureForm] = useState(false);
+  const [showFeatureList, setShowFeatureList] = useState(false);
+
+  const [selectedServiceId, setSelectedServiceId] = useState(null);
+
+  const [features, setFeatures] = useState([]);
+  const [featureLoading, setFeatureLoading] = useState(false);
+
+  const [featureForm, setFeatureForm] = useState({
+    service_overview_id: "",
+    title: "",
+    description: "",
   });
 
   // Fetch service reviews on component mount
@@ -36,12 +63,12 @@ const HandleServiceReview = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/admin/service-overview-list');
+      const response = await api.get("/admin/service-overview-list");
       setServiceReviews(response.data.data || []);
-      console.log('Fetched service reviews:', response.data.data);
+      console.log("Fetched service reviews:", response.data.data);
     } catch (err) {
-      setError('Failed to fetch service reviews. Please try again.');
-      console.error('Error fetching service reviews:', err);
+      setError("Failed to fetch service reviews. Please try again.");
+      console.error("Error fetching service reviews:", err);
     } finally {
       setLoading(false);
     }
@@ -49,51 +76,51 @@ const HandleServiceReview = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
-    
-    if (type === 'file') {
+
+    if (type === "file") {
       const file = files[0];
       const previewUrl = URL.createObjectURL(file);
-      
-      if (name === 'web_image') {
-        setFormData(prev => ({
+
+      if (name === "web_image") {
+        setFormData((prev) => ({
           ...prev,
           web_image: file,
-          web_image_preview: previewUrl
+          web_image_preview: previewUrl,
         }));
-      } else if (name === 'mobile_image') {
-        setFormData(prev => ({
+      } else if (name === "mobile_image") {
+        setFormData((prev) => ({
           ...prev,
           mobile_image: file,
-          mobile_image_preview: previewUrl
+          mobile_image_preview: previewUrl,
         }));
       }
-    } else if (type === 'checkbox') {
-      setFormData(prev => ({
+    } else if (type === "checkbox") {
+      setFormData((prev) => ({
         ...prev,
-        [name]: e.target.checked ? 1 : 0
+        [name]: e.target.checked ? 1 : 0,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleAddNew = () => {
     setFormData({
-      heading: '',
-      highlighted_text: '',
-      heading_meta: '',
-      description: '',
-      heading2: '',
-      description2: '',
-      web_image_alt: '',
-      mobile_image_alt: '',
+      heading: "",
+      highlighted_text: "",
+      heading_meta: "",
+      description: "",
+      heading2: "",
+      description2: "",
+      web_image_alt: "",
+      mobile_image_alt: "",
       web_image: null,
       mobile_image: null,
-      web_image_preview: '',
-      mobile_image_preview: '',
+      web_image_preview: "",
+      mobile_image_preview: "",
       is_active: 1,
     });
     setEditingId(null);
@@ -102,18 +129,18 @@ const HandleServiceReview = () => {
 
   const handleEdit = (review) => {
     setFormData({
-      heading: review.heading || '',
-      highlighted_text: review.highlighted_text || '',
-      heading_meta: review.heading_meta || '',
-      description: review.description || '',
-      heading2: review.heading2 || '',
-      description2: review.description2 || '',
-      web_image_alt: review.web_image_alt || '',
-      mobile_image_alt: review.mobile_image_alt || '',
+      heading: review.heading || "",
+      highlighted_text: review.highlighted_text || "",
+      heading_meta: review.heading_meta || "",
+      description: review.description || "",
+      heading2: review.heading2 || "",
+      description2: review.description2 || "",
+      web_image_alt: review.web_image_alt || "",
+      mobile_image_alt: review.mobile_image_alt || "",
       web_image: null,
       mobile_image: null,
-      web_image_preview: review.web_image_url || '',
-      mobile_image_preview: review.mobile_image_url || '',
+      web_image_preview: review.web_image_url || "",
+      mobile_image_preview: review.mobile_image_url || "",
       is_active: review.is_active ? 1 : 0,
     });
     setEditingId(review.id);
@@ -122,53 +149,63 @@ const HandleServiceReview = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       setSaving(true);
       setError(null);
       setSuccess(null);
 
       const formDataToSend = new FormData();
-      
+
       // Append all form fields except preview URLs and null values
-      Object.keys(formData).forEach(key => {
-        if (!key.includes('_preview') && formData[key] !== null && formData[key] !== '') {
+      Object.keys(formData).forEach((key) => {
+        if (
+          !key.includes("_preview") &&
+          formData[key] !== null &&
+          formData[key] !== ""
+        ) {
           formDataToSend.append(key, formData[key]);
         }
       });
 
       // Log form data for debugging
-      console.log('Form data to send:', Object.fromEntries(formDataToSend.entries()));
+      console.log(
+        "Form data to send:",
+        Object.fromEntries(formDataToSend.entries())
+      );
 
       // Use POST for both create and update
-      const endpoint = editingId 
+      const endpoint = editingId
         ? `/admin/service-overview/${editingId}`
-        : '/admin/service-overview';
-      
-      const method = editingId ? 'post' : 'post';
-      
+        : "/admin/service-overview";
+
+      const method = editingId ? "post" : "post";
+
       const response = await api[method](endpoint, formDataToSend);
 
       if (response.data.success) {
-        setSuccess(response.data.message || `Service review ${editingId ? 'updated' : 'created'} successfully!`);
-        
+        setSuccess(
+          response.data.message ||
+            `Service review ${editingId ? "updated" : "created"} successfully!`
+        );
+
         // Refresh service reviews list and reset form
         await fetchServiceReviews();
         setShowForm(false);
         setEditingId(null);
         setFormData({
-          heading: '',
-          highlighted_text: '',
-          heading_meta: '',
-          description: '',
-          heading2: '',
-          description2: '',
-          web_image_alt: '',
-          mobile_image_alt: '',
+          heading: "",
+          highlighted_text: "",
+          heading_meta: "",
+          description: "",
+          heading2: "",
+          description2: "",
+          web_image_alt: "",
+          mobile_image_alt: "",
           web_image: null,
           mobile_image: null,
-          web_image_preview: '',
-          mobile_image_preview: '',
+          web_image_preview: "",
+          mobile_image_preview: "",
           is_active: 1,
         });
 
@@ -177,25 +214,31 @@ const HandleServiceReview = () => {
           setSuccess(null);
         }, 5000);
       } else {
-        setError(response.data.message || `Failed to ${editingId ? 'update' : 'create'} service review.`);
+        setError(
+          response.data.message ||
+            `Failed to ${editingId ? "update" : "create"} service review.`
+        );
       }
     } catch (err) {
-      console.error('Error saving service review:', err.response?.data || err);
-      
+      console.error("Error saving service review:", err.response?.data || err);
+
       // Handle validation errors
       if (err.response?.data?.errors) {
         const errors = err.response.data.errors;
         let errorMessage = "Validation failed:\n";
-        
+
         Object.keys(errors).forEach((key) => {
           errorMessage += `${key}: ${errors[key].join(", ")}\n`;
         });
-        
+
         setError(errorMessage);
       } else {
-        const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          `Failed to ${editingId ? 'update' : 'create'} service review. Please try again.`;
+        const errorMessage =
+          err.response?.data?.message ||
+          err.response?.data?.error ||
+          `Failed to ${
+            editingId ? "update" : "create"
+          } service review. Please try again.`;
         setError(errorMessage);
       }
     } finally {
@@ -204,16 +247,18 @@ const HandleServiceReview = () => {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this service review?')) {
+    if (
+      !window.confirm("Are you sure you want to delete this service review?")
+    ) {
       return;
     }
 
     try {
       setError(null);
       const response = await api.delete(`/admin/service-overview/${id}`);
-      
+
       if (response.data.success) {
-        setSuccess('Service review deleted successfully!');
+        setSuccess("Service review deleted successfully!");
         await fetchServiceReviews();
 
         // Auto-clear success message after 5 seconds
@@ -221,11 +266,11 @@ const HandleServiceReview = () => {
           setSuccess(null);
         }, 5000);
       } else {
-        setError(response.data.message || 'Failed to delete service review.');
+        setError(response.data.message || "Failed to delete service review.");
       }
     } catch (err) {
-      setError('Failed to delete service review. Please try again.');
-      console.error('Error deleting service review:', err);
+      setError("Failed to delete service review. Please try again.");
+      console.error("Error deleting service review:", err);
     }
   };
 
@@ -235,9 +280,9 @@ const HandleServiceReview = () => {
       const response = await api.put(`/admin/service-reviews/${id}/status`, {
         is_active: currentStatus ? false : true,
       });
-      
+
       if (response.data.success) {
-        setSuccess('Status updated successfully!');
+        setSuccess("Status updated successfully!");
         await fetchServiceReviews();
 
         // Auto-clear success message after 3 seconds
@@ -245,11 +290,87 @@ const HandleServiceReview = () => {
           setSuccess(null);
         }, 3000);
       } else {
-        setError(response.data.message || 'Failed to update status.');
+        setError(response.data.message || "Failed to update status.");
       }
     } catch (err) {
-      setError('Failed to update status. Please try again.');
-      console.error('Error updating status:', err);
+      setError("Failed to update status. Please try again.");
+      console.error("Error updating status:", err);
+    }
+  };
+
+  const handleAddFeature = (review) => {
+    setFeatureForm({
+      service_overview_id: review.id,
+      title: "",
+      description: "",
+    });
+
+    setSelectedServiceId(review.id);
+    setShowFeatureForm(true);
+    setShowFeatureList(false);
+  };
+
+  const handleViewFeatures = async (review) => {
+    try {
+      setFeatureLoading(true);
+      setSelectedServiceId(review.id);
+
+      const res = await api.get(`/admin/service-features/${review.id}`);
+
+      setFeatures(res.data.data || []);
+      setShowFeatureList(true);
+      setShowFeatureForm(false);
+    } catch (err) {
+      setError("Failed to load features");
+    } finally {
+      setFeatureLoading(false);
+    }
+  };
+
+  const handleFeatureSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      if (editingId) {
+        await api.put(`/admin/service-features/${editingId}`, featureForm);
+        setSuccess("Feature updated successfully");
+      } else {
+        await api.post("/admin/service-features", featureForm);
+        setSuccess("Feature added successfully");
+      }
+
+      setEditingId(null);
+      setShowFeatureForm(false);
+
+      handleViewFeatures({ id: featureForm.service_overview_id });
+    } catch (err) {
+      setError("Failed to save feature");
+    }
+  };
+
+  const handleEditFeature = (feature) => {
+    setFeatureForm({
+      service_overview_id: feature.service_overview_id,
+      title: feature.title,
+      description: feature.description,
+    });
+
+    setEditingId(feature.id);
+    setShowFeatureForm(true);
+    setShowFeatureList(false);
+  };
+
+  const handleDeleteFeature = async (id) => {
+    if (!window.confirm("Delete this feature?")) return;
+
+    try {
+      await api.delete(`/admin/service-features/${id}`);
+      setSuccess("Feature deleted successfully");
+
+      // Reload list
+      handleViewFeatures({ id: selectedServiceId });
+    } catch (err) {
+      setError("Failed to delete feature");
     }
   };
 
@@ -288,25 +409,25 @@ const HandleServiceReview = () => {
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-semibold text-gray-900">
-                  {editingId ? 'Edit Service Review' : 'Add New Service Review'}
+                  {editingId ? "Edit Service Review" : "Add New Service Review"}
                 </h2>
                 <button
                   onClick={() => {
                     setShowForm(false);
                     setEditingId(null);
                     setFormData({
-                      heading: '',
-                      highlighted_text: '',
-                      heading_meta: '',
-                      description: '',
-                      heading2: '',
-                      description2: '',
-                      web_image_alt: '',
-                      mobile_image_alt: '',
+                      heading: "",
+                      highlighted_text: "",
+                      heading_meta: "",
+                      description: "",
+                      heading2: "",
+                      description2: "",
+                      web_image_alt: "",
+                      mobile_image_alt: "",
                       web_image: null,
                       mobile_image: null,
-                      web_image_preview: '',
-                      mobile_image_preview: '',
+                      web_image_preview: "",
+                      mobile_image_preview: "",
                       is_active: 1,
                     });
                   }}
@@ -404,13 +525,17 @@ const HandleServiceReview = () => {
                       <label className="block text-sm font-medium text-gray-900 mb-2">
                         Second Description
                       </label>
-                      <textarea
-                        name="description2"
+                      
+                      <CustomTextEditor
                         value={formData.description2}
-                        onChange={handleInputChange}
-                        rows={6}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400 resize-none"
                         placeholder="Additional description or benefits"
+                        height={250}
+                        onChange={(content) =>
+                          setFormData((prev) => ({
+                            ...prev,
+                            description2: content,
+                          }))
+                        }
                       />
                     </div>
 
@@ -424,11 +549,25 @@ const HandleServiceReview = () => {
                             onChange={handleInputChange}
                             className="sr-only"
                           />
-                          <div className={`block w-14 h-8 rounded-full ${formData.is_active === 1 ? 'bg-gray-900' : 'bg-gray-300'}`}></div>
-                          <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${formData.is_active === 1 ? 'transform translate-x-6' : ''}`}></div>
+                          <div
+                            className={`block w-14 h-8 rounded-full ${
+                              formData.is_active === 1
+                                ? "bg-gray-900"
+                                : "bg-gray-300"
+                            }`}
+                          ></div>
+                          <div
+                            className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${
+                              formData.is_active === 1
+                                ? "transform translate-x-6"
+                                : ""
+                            }`}
+                          ></div>
                         </div>
                         <span className="text-sm font-medium text-gray-900">
-                          {formData.is_active === 1 ? 'Active (Visible on site)' : 'Inactive (Hidden on site)'}
+                          {formData.is_active === 1
+                            ? "Active (Visible on site)"
+                            : "Inactive (Hidden on site)"}
                         </span>
                       </label>
                     </div>
@@ -437,8 +576,10 @@ const HandleServiceReview = () => {
 
                 {/* Image Upload Section */}
                 <div className="border-t border-gray-200 pt-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Images</h3>
-                  
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                    Images
+                  </h3>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Web Image */}
                     <div className="space-y-4">
@@ -449,7 +590,9 @@ const HandleServiceReview = () => {
                         <div className="space-y-3">
                           {formData.web_image_preview && (
                             <div className="border border-gray-200 rounded-lg p-3">
-                              <div className="mb-2 text-sm text-gray-600">Current Image:</div>
+                              <div className="mb-2 text-sm text-gray-600">
+                                Current Image:
+                              </div>
                               <img
                                 src={formData.web_image_preview}
                                 alt="Web preview"
@@ -488,7 +631,9 @@ const HandleServiceReview = () => {
                         <div className="space-y-3">
                           {formData.mobile_image_preview && (
                             <div className="border border-gray-200 rounded-lg p-3">
-                              <div className="mb-2 text-sm text-gray-600">Current Image:</div>
+                              <div className="mb-2 text-sm text-gray-600">
+                                Current Image:
+                              </div>
                               <img
                                 src={formData.mobile_image_preview}
                                 alt="Mobile preview"
@@ -520,8 +665,6 @@ const HandleServiceReview = () => {
                   </div>
                 </div>
 
-          
-
                 <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                   <button
                     type="button"
@@ -529,18 +672,18 @@ const HandleServiceReview = () => {
                       setShowForm(false);
                       setEditingId(null);
                       setFormData({
-                        heading: '',
-                        highlighted_text: '',
-                        heading_meta: '',
-                        description: '',
-                        heading2: '',
-                        description2: '',
-                        web_image_alt: '',
-                        mobile_image_alt: '',
+                        heading: "",
+                        highlighted_text: "",
+                        heading_meta: "",
+                        description: "",
+                        heading2: "",
+                        description2: "",
+                        web_image_alt: "",
+                        mobile_image_alt: "",
                         web_image: null,
                         mobile_image: null,
-                        web_image_preview: '',
-                        mobile_image_preview: '',
+                        web_image_preview: "",
+                        mobile_image_preview: "",
                         is_active: 1,
                       });
                     }}
@@ -561,7 +704,11 @@ const HandleServiceReview = () => {
                     ) : (
                       <>
                         <Save className="w-5 h-5" />
-                        <span>{editingId ? 'Update Service Review' : 'Create Service Review'}</span>
+                        <span>
+                          {editingId
+                            ? "Update Service Review"
+                            : "Create Service Review"}
+                        </span>
                       </>
                     )}
                   </button>
@@ -577,14 +724,104 @@ const HandleServiceReview = () => {
               <span>Add New Service Review</span>
             </button>
           )}
+
+          {showFeatureForm && (
+            <div className="bg-white rounded-xl shadow-lg p-6 mb-8 mt-4 border">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">
+                  {editingId ? "Edit Service Feature" : "Add Service Feature"}
+                </h2>
+
+                <button
+                  onClick={() => {
+                    setShowFeatureForm(false);
+                    setFeatureForm({
+                      service_overview_id: "",
+                      title: "",
+                      description: "",
+                    });
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+
+              <form onSubmit={handleFeatureSubmit} className="space-y-4">
+                {/* Service Overview Select */}
+                <select
+                  value={featureForm.service_overview_id}
+                  disabled
+                  className="w-full px-4 py-3 border rounded-lg bg-gray-100"
+                >
+                  {serviceReviews.map((sr) => (
+                    <option key={sr.id} value={sr.id}>
+                      {sr.heading}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="Feature Title"
+                  value={featureForm.title}
+                  onChange={(e) =>
+                    setFeatureForm({ ...featureForm, title: e.target.value })
+                  }
+                  required
+                  className="w-full px-4 py-3 border rounded-lg"
+                />
+
+                <textarea
+                  placeholder="Feature Description"
+                  value={featureForm.description}
+                  onChange={(e) =>
+                    setFeatureForm({
+                      ...featureForm,
+                      description: e.target.value,
+                    })
+                  }
+                  required
+                  className="w-full px-4 py-3 border rounded-lg"
+                />
+
+                <div className="flex justify-end gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowFeatureForm(false);
+                      setFeatureForm({
+                        service_overview_id: "",
+                        title: "",
+                        description: "",
+                      });
+                    }}
+                    className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100"
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-gray-900 text-white rounded-lg"
+                  >
+                    Save Feature
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
         </div>
 
         {/* Bottom Section - Service Reviews List */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
           <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Service Reviews List</h2>
+            <h2 className="text-xl font-semibold text-gray-900">
+              Service Reviews List
+            </h2>
             <p className="text-gray-600 text-sm mt-1">
-              {serviceReviews.length} review(s) found • {serviceReviews.filter(r => r.is_active).length} active
+              {serviceReviews.length} review(s) found •{" "}
+              {serviceReviews.filter((r) => r.is_active).length} active
             </p>
           </div>
 
@@ -633,23 +870,29 @@ const HandleServiceReview = () => {
                   {serviceReviews.map((review) => (
                     <tr key={review.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">#{review.id}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          #{review.id}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">{review.heading}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {review.heading}
+                        </div>
                         {review.slug && (
-                          <div className="text-xs text-gray-500 font-mono">/{review.slug}</div>
+                          <div className="text-xs text-gray-500 font-mono">
+                            /{review.slug}
+                          </div>
                         )}
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-600 max-w-xs">
-                          {review.highlighted_text || 'No highlighted text'}
+                          {review.highlighted_text || "No highlighted text"}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-600 max-w-md">
-                          {review.description.length > 100 
-                            ? `${review.description.substring(0, 100)}...` 
+                          {review.description.length > 100
+                            ? `${review.description.substring(0, 100)}...`
                             : review.description}
                         </div>
                       </td>
@@ -663,7 +906,9 @@ const HandleServiceReview = () => {
                               </div>
                             </div>
                           ) : (
-                            <div className="text-xs text-gray-400">No web image</div>
+                            <div className="text-xs text-gray-400">
+                              No web image
+                            </div>
                           )}
                           {review.mobile_image_url && (
                             <div className="relative group">
@@ -677,8 +922,14 @@ const HandleServiceReview = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => handleStatusToggle(review.id, review.is_active)}
-                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${review.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                          onClick={() =>
+                            handleStatusToggle(review.id, review.is_active)
+                          }
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            review.is_active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
                         >
                           {review.is_active ? (
                             <>
@@ -698,6 +949,22 @@ const HandleServiceReview = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleAddFeature(review)}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                            title="Add Feature"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleViewFeatures(review)}
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                            title="View Features"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
                           <button
                             onClick={() => handleEdit(review)}
                             className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -722,8 +989,66 @@ const HandleServiceReview = () => {
           )}
         </div>
 
-     
-      
+        {showFeatureList && (
+          <div className="bg-white rounded-xl shadow-lg mt-10 border">
+            <div className="px-6 py-4 border-b">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Service Features</h2>
+
+                <button
+                  onClick={() => {
+                    setShowFeatureList(false);
+                    setFeatures([]);
+                    setSelectedServiceId(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-full"
+                >
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+              </div>
+            </div>
+
+            {featureLoading ? (
+              <div className="p-6 text-center">Loading...</div>
+            ) : features.length === 0 ? (
+              <div className="p-6 text-center text-gray-500">
+                No features found
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {features.map((feature) => (
+                  <li
+                    key={feature.id}
+                    className="p-6 flex justify-between items-start gap-4"
+                  >
+                    <div>
+                      <h4 className="font-semibold">{feature.title}</h4>
+                      <p className="text-gray-600">{feature.description}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditFeature(feature)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
+                        title="Edit Feature"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleDeleteFeature(feature.id)}
+                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        title="Delete Feature"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@
     "jodit-react": "^5.2.38",
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
+    "react-data-table-component": "^7.7.0",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.5",
     "react-toastify": "^11.0.5",

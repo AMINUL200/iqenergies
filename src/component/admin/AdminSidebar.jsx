@@ -141,8 +141,8 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "List of Solutions",
           icon: <Database className="w-4 h-4" />,
           path: "/admin/handle-business-solutions/list-solutions",
-        }
-      ]
+        },
+      ],
     },
     {
       id: "service-management",
@@ -160,8 +160,27 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
           label: "List of Services",
           icon: <Database className="w-4 h-4" />,
           path: "/admin/handle-services/list-services",
-        }
-      ]
+        },
+      ],
+    },
+    {
+      id: "product",
+      label: "Product Management",
+      icon: <Settings className="w-5 h-5" />,
+      children: [
+        {
+          id: "category",
+          label: "Category",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-product/category",
+        },
+        {
+          id: "product",
+          label: "Product Management",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-product/product",
+        },
+      ],
     },
     {
       id: "site-settings",

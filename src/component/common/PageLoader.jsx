@@ -295,7 +295,7 @@ const PageLoader = ({ energyType = "brand" }) => {
         </div>
 
         {/* Progress Bar */}
-        <div className="w-full max-w-md space-y-3">
+        {/* <div className="w-full max-w-md space-y-3">
           <div
             className="h-4 rounded-full overflow-hidden"
             style={{
@@ -310,7 +310,6 @@ const PageLoader = ({ energyType = "brand" }) => {
                 background: `linear-gradient(90deg, ${colors.primary}, ${colors.secondary}, ${colors.accent})`,
               }}
             >
-              {/* Shimmer effect */}
               <div
                 className="absolute top-0 bottom-0 w-20 bg-white opacity-30 animate-shimmer"
                 style={{
@@ -337,7 +336,7 @@ const PageLoader = ({ energyType = "brand" }) => {
               ></div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Loading Dots Animation */}
         <div className="flex items-center justify-center space-x-2 pt-4">

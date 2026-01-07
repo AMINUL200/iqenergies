@@ -1,7 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, X } from 'lucide-react';
-import { api } from '../../../utils/app';
-import AdminLoader from '../../../component/admin/AdminLoader';
+import React, { useState, useEffect } from "react";
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  EyeOff,
+  ChevronUp,
+  ChevronDown,
+  X,
+} from "lucide-react";
+import { api } from "../../../utils/app";
+import AdminLoader from "../../../component/admin/AdminLoader";
+import DataTable from "react-data-table-component";
 
 const HandleBanner = () => {
   const [banners, setBanners] = useState([]);
@@ -10,20 +20,20 @@ const HandleBanner = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    title: '',
-    title_meta: '',
-    description: '',
-    desc_meta: '',
-    button_name: '',
-    button_url: '',
-    web_image_alt: '',
-    mobile_image_alt: '',
+    title: "",
+    title_meta: "",
+    description: "",
+    desc_meta: "",
+    button_name: "",
+    button_url: "",
+    web_image_alt: "",
+    mobile_image_alt: "",
     status: 1,
     sort_order: 1,
     web_image: null,
     mobile_image: null,
-    web_image_preview: '',
-    mobile_image_preview: ''
+    web_image_preview: "",
+    mobile_image_preview: "",
   });
 
   useEffect(() => {
@@ -34,12 +44,12 @@ const HandleBanner = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/banners');
-      console.log("banner data: ", response.data)
+      const response = await api.get("/banners");
+      console.log("banner data: ", response.data);
       setBanners(response.data.data);
     } catch (err) {
-      setError('Failed to fetch banners. Please try again.');
-      console.error('Error fetching banners:', err);
+      setError("Failed to fetch banners. Please try again.");
+      console.error("Error fetching banners:", err);
     } finally {
       setLoading(false);
     }
@@ -47,53 +57,53 @@ const HandleBanner = () => {
 
   const handleInputChange = (e) => {
     const { name, value, type, files } = e.target;
-    
-    if (type === 'file') {
+
+    if (type === "file") {
       const file = files[0];
       const previewUrl = URL.createObjectURL(file);
-      
-      if (name === 'web_image') {
-        setFormData(prev => ({
+
+      if (name === "web_image") {
+        setFormData((prev) => ({
           ...prev,
           web_image: file,
-          web_image_preview: previewUrl
+          web_image_preview: previewUrl,
         }));
-      } else if (name === 'mobile_image') {
-        setFormData(prev => ({
+      } else if (name === "mobile_image") {
+        setFormData((prev) => ({
           ...prev,
           mobile_image: file,
-          mobile_image_preview: previewUrl
+          mobile_image_preview: previewUrl,
         }));
       }
-    } else if (type === 'checkbox') {
-      setFormData(prev => ({
+    } else if (type === "checkbox") {
+      setFormData((prev) => ({
         ...prev,
-        [name]: e.target.checked ? 1 : 0
+        [name]: e.target.checked ? 1 : 0,
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        [name]: value
+        [name]: value,
       }));
     }
   };
 
   const handleEdit = (banner) => {
     setFormData({
-      title: banner.title || '',
-      title_meta: banner.title_meta || '',
-      description: banner.description || '',
-      desc_meta: banner.desc_meta || '',
-      button_name: banner.button_name || '',
-      button_url: banner.button_url || '',
-      web_image_alt: banner.web_image_alt || '',
-      mobile_image_alt: banner.mobile_image_alt || '',
+      title: banner.title || "",
+      title_meta: banner.title_meta || "",
+      description: banner.description || "",
+      desc_meta: banner.desc_meta || "",
+      button_name: banner.button_name || "",
+      button_url: banner.button_url || "",
+      web_image_alt: banner.web_image_alt || "",
+      mobile_image_alt: banner.mobile_image_alt || "",
       status: banner.status || 0,
       sort_order: banner.sort_order || 1,
       web_image: null,
       mobile_image: null,
-      web_image_preview: banner.web_image_url || '',
-      mobile_image_preview: banner.mobile_image_url || ''
+      web_image_preview: banner.web_image_url || "",
+      mobile_image_preview: banner.mobile_image_url || "",
     });
     setEditingId(banner.id);
     setShowForm(true);
@@ -101,20 +111,23 @@ const HandleBanner = () => {
 
   const handleAddNew = () => {
     setFormData({
-      title: '',
-      title_meta: '',
-      description: '',
-      desc_meta: '',
-      button_name: '',
-      button_url: '',
-      web_image_alt: '',
-      mobile_image_alt: '',
+      title: "",
+      title_meta: "",
+      description: "",
+      desc_meta: "",
+      button_name: "",
+      button_url: "",
+      web_image_alt: "",
+      mobile_image_alt: "",
       status: 1,
-      sort_order: banners.length > 0 ? Math.max(...banners.map(b => b.sort_order)) + 1 : 1,
+      sort_order:
+        banners.length > 0
+          ? Math.max(...banners.map((b) => b.sort_order)) + 1
+          : 1,
       web_image: null,
       mobile_image: null,
-      web_image_preview: '',
-      mobile_image_preview: ''
+      web_image_preview: "",
+      mobile_image_preview: "",
     });
     setEditingId(null);
     setShowForm(true);
@@ -124,9 +137,9 @@ const HandleBanner = () => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      
-      Object.keys(formData).forEach(key => {
-        if (key !== 'web_image_preview' && key !== 'mobile_image_preview') {
+
+      Object.keys(formData).forEach((key) => {
+        if (key !== "web_image_preview" && key !== "mobile_image_preview") {
           if (formData[key] !== null) {
             formDataToSend.append(key, formData[key]);
           }
@@ -136,42 +149,44 @@ const HandleBanner = () => {
       if (editingId) {
         await api.post(`/admin/banners/${editingId}`, formDataToSend);
       } else {
-        await api.post('admin/banners', formDataToSend);
+        await api.post("admin/banners", formDataToSend);
       }
 
       fetchBanners();
       setShowForm(false);
       setEditingId(null);
       setFormData({
-        title: '',
-        title_meta: '',
-        description: '',
-        desc_meta: '',
-        button_name: '',
-        button_url: '',
-        web_image_alt: '',
-        mobile_image_alt: '',
+        title: "",
+        title_meta: "",
+        description: "",
+        desc_meta: "",
+        button_name: "",
+        button_url: "",
+        web_image_alt: "",
+        mobile_image_alt: "",
         status: 1,
         sort_order: 1,
         web_image: null,
         mobile_image: null,
-        web_image_preview: '',
-        mobile_image_preview: ''
+        web_image_preview: "",
+        mobile_image_preview: "",
       });
     } catch (err) {
-      setError(`Failed to ${editingId ? 'update' : 'create'} banner. Please try again.`);
-      console.error('Error submitting form:', err);
+      setError(
+        `Failed to ${editingId ? "update" : "create"} banner. Please try again.`
+      );
+      console.error("Error submitting form:", err);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this banner?')) {
+    if (window.confirm("Are you sure you want to delete this banner?")) {
       try {
         await api.delete(`/admin/banners/${id}`);
         fetchBanners();
       } catch (err) {
-        setError('Failed to delete banner. Please try again.');
-        console.error('Error deleting banner:', err);
+        setError("Failed to delete banner. Please try again.");
+        console.error("Error deleting banner:", err);
       }
     }
   };
@@ -181,24 +196,143 @@ const HandleBanner = () => {
       await api.put(`/banners/${id}/sort`, { direction });
       fetchBanners();
     } catch (err) {
-      setError('Failed to update sort order. Please try again.');
-      console.error('Error updating sort order:', err);
+      setError("Failed to update sort order. Please try again.");
+      console.error("Error updating sort order:", err);
     }
   };
 
   const handleStatusToggle = async (id, currentStatus) => {
     try {
-      await api.put(`/banners/${id}/status`, { status: currentStatus === 1 ? 0 : 1 });
+      await api.put(`/banners/${id}/status`, {
+        status: currentStatus === 1 ? 0 : 1,
+      });
       fetchBanners();
     } catch (err) {
-      setError('Failed to update status. Please try again.');
-      console.error('Error updating status:', err);
+      setError("Failed to update status. Please try again.");
+      console.error("Error updating status:", err);
     }
   };
 
   if (loading) {
     return <AdminLoader />;
   }
+
+  const columns = [
+    {
+      name: "Image",
+      cell: (row) => (
+        <div className="w-20 h-12 rounded overflow-hidden border border-gray-200">
+          {row.web_image_url ? (
+            <img
+              src={row.web_image_url}
+              alt={row.web_image_alt || "Banner"}
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center text-xs text-gray-400">
+              No image
+            </div>
+          )}
+        </div>
+      ),
+      width: "120px",
+    },
+    {
+      name: "Title",
+      selector: (row) => row.title,
+      sortable: true,
+      grow: 2,
+    },
+    {
+      name: "Description",
+      cell: (row) => (
+        <span className="text-sm text-gray-600 line-clamp-2">
+          {row.description}
+        </span>
+      ),
+      grow: 3,
+    },
+    {
+      name: "Status",
+      cell: (row) => (
+        <button
+          onClick={() => handleStatusToggle(row.id, row.status)}
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            row.status === 1
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {row.status === 1 ? (
+            <>
+              <Eye className="w-3 h-3 mr-1" /> Active
+            </>
+          ) : (
+            <>
+              <EyeOff className="w-3 h-3 mr-1" /> Inactive
+            </>
+          )}
+        </button>
+      ),
+      width: "140px",
+    },
+    {
+      name: "Sort",
+      cell: (row) => (
+        <div className="flex items-center space-x-1">
+          <button
+            onClick={() => handleSortOrder(row.id, "up")}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronUp size={14} />
+          </button>
+          <span className="text-sm font-medium w-6 text-center">
+            {row.sort_order}
+          </span>
+          <button
+            onClick={() => handleSortOrder(row.id, "down")}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronDown size={14} />
+          </button>
+        </div>
+      ),
+      width: "120px",
+    },
+    {
+      name: "Created",
+      selector: (row) =>
+        new Date(row.created_at).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        }),
+      sortable: true,
+      width: "140px",
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleEdit(row)}
+            className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="p-2 hover:bg-red-50 text-red-600 rounded-lg"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      button: true,
+      width: "140px",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50 px-3 py-4 sm:px-4 sm:py-5 lg:px-6 lg:py-6">
@@ -207,8 +341,12 @@ const HandleBanner = () => {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">Banner Management</h1>
-              <p className="text-gray-600 mt-1 text-xs sm:text-sm md:text-base">Manage your website banners and promotions</p>
+              <h1 className="text-xl font-bold text-gray-900 sm:text-2xl lg:text-3xl">
+                Banner Management
+              </h1>
+              <p className="text-gray-600 mt-1 text-xs sm:text-sm md:text-base">
+                Manage your website banners and promotions
+              </p>
             </div>
             {!showForm && (
               <button
@@ -227,8 +365,16 @@ const HandleBanner = () => {
           <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg">
             <div className="flex items-start">
               <div className="flex-shrink-0 mt-0.5">
-                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                <svg
+                  className="h-4 w-4 sm:h-5 sm:w-5 text-red-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <div className="ml-3">
@@ -244,7 +390,7 @@ const HandleBanner = () => {
             <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-gray-50">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-semibold text-gray-900 sm:text-lg md:text-xl">
-                  {editingId ? 'Edit Banner' : 'Add New Banner'}
+                  {editingId ? "Edit Banner" : "Add New Banner"}
                 </h2>
                 <button
                   onClick={() => setShowForm(false)}
@@ -388,7 +534,9 @@ const HandleBanner = () => {
                           accept="image/*"
                           className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 text-xs sm:text-sm md:text-base file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Recommended: 1920×600px, JPG/PNG</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Recommended: 1920×600px, JPG/PNG
+                        </p>
                       </div>
                       <input
                         type="text"
@@ -423,7 +571,9 @@ const HandleBanner = () => {
                           accept="image/*"
                           className="w-full px-3 py-2 sm:px-4 sm:py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 text-xs sm:text-sm md:text-base file:mr-2 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded file:border-0 file:text-xs sm:file:text-sm file:font-medium file:bg-gray-900 file:text-white hover:file:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Recommended: 768×1024px, JPG/PNG</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Recommended: 768×1024px, JPG/PNG
+                        </p>
                       </div>
                       <input
                         type="text"
@@ -447,20 +597,40 @@ const HandleBanner = () => {
                             onChange={handleInputChange}
                             className="sr-only"
                           />
-                          <div className={`w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-colors ${formData.status === 1 ? 'bg-green-500' : 'bg-gray-300'}`}></div>
-                          <div className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform ${formData.status === 1 ? 'transform translate-x-5 sm:translate-x-6' : ''}`}></div>
+                          <div
+                            className={`w-10 h-5 sm:w-12 sm:h-6 rounded-full transition-colors ${
+                              formData.status === 1
+                                ? "bg-green-500"
+                                : "bg-gray-300"
+                            }`}
+                          ></div>
+                          <div
+                            className={`absolute left-0.5 top-0.5 bg-white w-4 h-4 rounded-full transition-transform ${
+                              formData.status === 1
+                                ? "transform translate-x-5 sm:translate-x-6"
+                                : ""
+                            }`}
+                          ></div>
                         </div>
                         <div>
                           <span className="text-xs sm:text-sm font-medium text-gray-900">
                             Status
                           </span>
                           <p className="text-xs text-gray-500">
-                            {formData.status === 1 ? 'Banner will be visible on website' : 'Banner will be hidden'}
+                            {formData.status === 1
+                              ? "Banner will be visible on website"
+                              : "Banner will be hidden"}
                           </p>
                         </div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded ${formData.status === 1 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                        {formData.status === 1 ? 'Active' : 'Inactive'}
+                      <span
+                        className={`px-2 py-1 text-xs font-medium rounded ${
+                          formData.status === 1
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {formData.status === 1 ? "Active" : "Inactive"}
                       </span>
                     </label>
                   </div>
@@ -479,7 +649,7 @@ const HandleBanner = () => {
                   type="submit"
                   className="px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-xs sm:text-sm md:text-base order-1 sm:order-2"
                 >
-                  {editingId ? 'Update Banner' : 'Create Banner'}
+                  {editingId ? "Update Banner" : "Create Banner"}
                 </button>
               </div>
             </form>
@@ -491,8 +661,12 @@ const HandleBanner = () => {
           <div className="px-4 py-3 sm:px-5 sm:py-4 border-b border-gray-200 bg-gray-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-base font-semibold text-gray-900 sm:text-lg md:text-xl">Banners List</h2>
-                <p className="text-gray-600 text-xs sm:text-sm mt-1">{banners.length} banner(s) found</p>
+                <h2 className="text-base font-semibold text-gray-900 sm:text-lg md:text-xl">
+                  Banners List
+                </h2>
+                <p className="text-gray-600 text-xs sm:text-sm mt-1">
+                  {banners.length} banner(s) found
+                </p>
               </div>
               {!showForm && banners.length > 0 && (
                 <button
@@ -508,7 +682,9 @@ const HandleBanner = () => {
 
           {banners.length === 0 ? (
             <div className="p-6 sm:p-8 md:p-12 text-center">
-              <div className="text-gray-400 text-sm sm:text-base mb-4">No banners found</div>
+              <div className="text-gray-400 text-sm sm:text-base mb-4">
+                No banners found
+              </div>
               <button
                 onClick={handleAddNew}
                 className="px-5 py-2.5 sm:px-6 sm:py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-sm sm:text-base"
@@ -517,241 +693,17 @@ const HandleBanner = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              {/* Desktop/Tablet Table View */}
-              <table className="w-full hidden md:table min-w-[768px]">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Image
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider min-w-[200px]">
-                      Title & Description
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Sort Order
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-4 md:px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {banners?.map((banner) => (
-                    <tr 
-                      key={banner.id} 
-                      className="hover:bg-gray-50 transition-colors duration-150"
-                    >
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="w-16 h-10 md:w-20 md:h-12 rounded overflow-hidden border border-gray-200">
-                          {banner.web_image_url ? (
-                            <img
-                              src={banner.web_image_url}
-                              alt={banner.web_image_alt || 'Banner'}
-                              className="w-full h-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                              <span className="text-xs text-gray-400">No image</span>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="max-w-xs">
-                          <div className="font-medium text-gray-900 text-sm md:text-base">
-                            {banner.title}
-                          </div>
-                          <div className="text-xs text-gray-600 mt-1 line-clamp-2">
-                            {banner.description}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <button
-                          onClick={() => handleStatusToggle(banner.id, banner.status)}
-                          className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                            banner.status === 1 
-                              ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                              : 'bg-red-100 text-red-800 hover:bg-red-200'
-                          }`}
-                        >
-                          {banner.status === 1 ? (
-                            <>
-                              <Eye className="w-3 h-3 mr-1.5" />
-                              Active
-                            </>
-                          ) : (
-                            <>
-                              <EyeOff className="w-3 h-3 mr-1.5" />
-                              Inactive
-                            </>
-                          )}
-                        </button>
-                      </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleSortOrder(banner.id, 'up')}
-                            className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                            title="Move up"
-                          >
-                            <ChevronUp className="w-4 h-4 text-gray-600" />
-                          </button>
-                          <span className="text-sm text-gray-900 font-medium w-8 text-center">
-                            {banner.sort_order}
-                          </span>
-                          <button
-                            onClick={() => handleSortOrder(banner.id, 'down')}
-                            className="p-1.5 hover:bg-gray-100 rounded transition-colors"
-                            title="Move down"
-                          >
-                            <ChevronDown className="w-4 h-4 text-gray-600" />
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="text-xs sm:text-sm text-gray-600">
-                          {new Date(banner.created_at).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric'
-                          })}
-                        </div>
-                      </td>
-                      <td className="px-4 md:px-6 py-4">
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={() => handleEdit(banner)}
-                            className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors duration-150"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(banner.id)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-150"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden p-4 space-y-4">
-                {banners.map((banner) => (
-                  <div key={banner.id} className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-                    <div className="flex items-start space-x-3">
-                      <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden border border-gray-200">
-                        {banner.web_image_url ? (
-                          <img
-                            src={banner.web_image_url}
-                            alt={banner.web_image_alt || 'Banner'}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-100 flex items-center justify-center">
-                            <span className="text-xs text-gray-400">No image</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h3 className="text-sm font-medium text-gray-900 truncate">
-                              {banner.title}
-                            </h3>
-                            <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                              {banner.description}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-1 ml-2">
-                            <button
-                              onClick={() => handleEdit(banner)}
-                              className="p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(banner.id)}
-                              className="p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-3 flex flex-wrap items-center gap-2">
-                          <button
-                            onClick={() => handleStatusToggle(banner.id, banner.status)}
-                            className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
-                              banner.status === 1 
-                                ? 'bg-green-100 text-green-800' 
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            {banner.status === 1 ? (
-                              <>
-                                <Eye className="w-3 h-3 mr-1" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="w-3 h-3 mr-1" />
-                                Inactive
-                              </>
-                            )}
-                          </button>
-                          
-                          <div className="flex items-center bg-gray-50 rounded-lg px-2 py-1">
-                            <button
-                              onClick={() => handleSortOrder(banner.id, 'up')}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Move up"
-                            >
-                              <ChevronUp className="w-3 h-3 text-gray-600" />
-                            </button>
-                            <span className="text-xs font-medium text-gray-900 mx-2">
-                              Order: {banner.sort_order}
-                            </span>
-                            <button
-                              onClick={() => handleSortOrder(banner.id, 'down')}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Move down"
-                            >
-                              <ChevronDown className="w-3 h-3 text-gray-600" />
-                            </button>
-                          </div>
-                          
-                          <div className="text-xs text-gray-500">
-                            {new Date(banner.created_at).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric'
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="p-4">
+              <DataTable
+                columns={columns}
+                data={banners}
+                pagination
+                highlightOnHover
+                responsive
+                persistTableHead
+                noHeader
+                defaultSortFieldId={6}
+              />
             </div>
           )}
         </div>

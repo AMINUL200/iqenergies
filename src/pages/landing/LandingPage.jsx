@@ -17,9 +17,8 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(0);
   // const [loading, setLoading] = useState(false);
-   const { data, loading, errors } = useLandingData();
-   console.log("Landing page data:", data, "Errors:", errors);
-  
+  const { data, loading, errors } = useLandingData();
+  console.log("Landing page data:", data, "Errors:", errors);
 
   const location = useLocation();
 
@@ -76,7 +75,7 @@ const LandingPage = () => {
       </section>
 
       {/* about us section */}
-      <AboutSection aboutData={data.about}/>
+      <AboutSection aboutData={data.about} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
@@ -97,14 +96,14 @@ const LandingPage = () => {
       </section>
 
       {/* product section */}
-      <ProductSection />
+      <ProductSection productData={data.product} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
       </section>
 
       {/* business verticals */}
-      <BusinessVerticalsSection />
+      <BusinessVerticalsSection businessData={data.business} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>
@@ -118,7 +117,7 @@ const LandingPage = () => {
       </section>
 
       {/* services section */}
-      <ServicesSection />
+      <ServicesSection servicesData={data.services} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>

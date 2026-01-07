@@ -42,9 +42,11 @@ import HandleBusinessList from "./pages/admin/business_solutions/HandleBusinessL
 import HandleServiceHero from "./pages/admin/service/HandleServiceHero";
 import HandleServiceReview from "./pages/admin/service/HandleServiceReview";
 import SiteSettings from "./pages/admin/setting/SiteSettings";
+import HandleServicesFeature from "./pages/admin/service/HandleServicesFeature";
+import HandleProductCategory from "./pages/admin/product/HandleProductCategory";
+import HandleProduct from "./pages/admin/product/HandleProduct";
 
 const App = () => {
-
   return (
     <Router>
       <Routes>
@@ -53,8 +55,6 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
-
-       
 
         {/* ---------- PUBLIC USER ROUTES ---------- */}
         <Route element={<PublicUserRoute />}>
@@ -89,30 +89,70 @@ const App = () => {
             <Route index element={<AdminDashboard />} />
             {/* <Route path="site-settings" element={<SiteSettings />} /> */}
             <Route path="profile" element={<AdminProfile />} />
-
             <Route path="handle-banner" element={<HandleBanner />} />
-            <Route path="handle-about/hero-section" element={<HandleAboutHero />} />
-            <Route path="handle-about/who-we-are" element={<HandleWhoWeAre />} />
-            <Route path="handle-about/features" element={<HandleAboutFeatures />} />
-            <Route path="handle-about/mission-vision" element={<HandleAboutMission />} />
+            <Route
+              path="handle-about/hero-section"
+              element={<HandleAboutHero />}
+            />
+            <Route
+              path="handle-about/who-we-are"
+              element={<HandleWhoWeAre />}
+            />
+            <Route
+              path="handle-about/features"
+              element={<HandleAboutFeatures />}
+            />
+            <Route
+              path="handle-about/mission-vision"
+              element={<HandleAboutMission />}
+            />
             <Route path="handle-about/cta" element={<HandleAboutCta />} />
-
-            <Route path="handle-what-we-do/list-services" element={<HandleWhatWeDoList />} />
-            <Route path="handle-what-we-do/hero-section" element={<HandleWhatWeDoHero />} />
-
-            <Route path="handle-our-solutions/list-solutions" element={<HandleOurSolutionItems />} />
-            <Route path="handle-our-solutions/hero-section" element={<HandleOurSolutionHero />} />
-
-            <Route path="handle-business-solutions/hero-section" element={<HandleBusinessHero />} />
-            <Route path="handle-business-solutions/list-solutions" element={<HandleBusinessList />} />
-
-            <Route path="handle-services/hero-section" element={<HandleServiceHero />} />
-            <Route path="handle-services/list-services" element={<HandleServiceReview />} />
-
+            <Route
+              path="handle-what-we-do/list-services"
+              element={<HandleWhatWeDoList />}
+            />
+            <Route
+              path="handle-what-we-do/hero-section"
+              element={<HandleWhatWeDoHero />}
+            />
+            <Route
+              path="handle-our-solutions/list-solutions"
+              element={<HandleOurSolutionItems />}
+            />
+            <Route
+              path="handle-our-solutions/hero-section"
+              element={<HandleOurSolutionHero />}
+            />
+            <Route
+              path="handle-business-solutions/hero-section"
+              element={<HandleBusinessHero />}
+            />
+            <Route
+              path="handle-business-solutions/list-solutions"
+              element={<HandleBusinessList />}
+            />
+            <Route
+              path="handle-services/hero-section"
+              element={<HandleServiceHero />}
+            />
+            <Route
+              path="handle-services/list-services"
+              element={<HandleServiceReview />}
+            />
+            <Route
+              path="handle-services/services-feature"
+              element={<HandleServicesFeature />}
+            />
             <Route path="site-settings" element={<SiteSettings />} />
-
-
-
+            {/* product */}
+            <Route
+              path="handle-product/category"
+              element={<HandleProductCategory />}
+            />
+            <Route
+              path="handle-product/product"
+              element={<HandleProduct />}
+            />
           </Route>
         </Route>
       </Routes>

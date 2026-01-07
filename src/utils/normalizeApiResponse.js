@@ -17,6 +17,13 @@ export const normalizeApiResponse = (key, response) => {
     case "solution":
       return raw?.data || null;
 
+    case "business":
+      return raw?.data || null;
+    case "services":
+      return raw?.data || null;
+    case "product":
+      return raw?.data || null;
+
     default:
       return raw?.data || raw || null;
   }

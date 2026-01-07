@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { api } from "../../../utils/app";
 import AdminLoader from "../../../component/admin/AdminLoader";
+import DataTable from "react-data-table-component";
 
 const HandleWhatWeDoList = () => {
   const [whatWeDoList, setWhatWeDoList] = useState([]);
@@ -125,8 +126,6 @@ const HandleWhatWeDoList = () => {
 
       const response = await api[method](endpoint, formDataToSend);
 
-      
-
       if (response.data.success) {
         setSuccess(`Item ${editingId ? "updated" : "created"} successfully!`);
         // Refresh list and reset form
@@ -139,14 +138,14 @@ const HandleWhatWeDoList = () => {
           sort_order: 1,
           is_active: "1",
         });
-      }else{
+      } else {
         setError(
           response.data.message ||
-            `Failed to ${editingId ? "update" : "create"} item. Please try again.`
+            `Failed to ${
+              editingId ? "update" : "create"
+            } item. Please try again.`
         );
       }
-
-     
     } catch (err) {
       const errorMessage =
         err.response?.data?.message ||
@@ -219,6 +218,107 @@ const HandleWhatWeDoList = () => {
   if (loading) {
     return <AdminLoader />;
   }
+
+  const columns = [
+    {
+      name: "Sort",
+      cell: (row) => (
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => handleSortOrder(row.id, "up")}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronUp size={14} />
+          </button>
+          <span className="text-sm font-medium w-8 text-center">
+            {row.sort_order}
+          </span>
+          <button
+            onClick={() => handleSortOrder(row.id, "down")}
+            className="p-1 hover:bg-gray-100 rounded"
+          >
+            <ChevronDown size={14} />
+          </button>
+        </div>
+      ),
+      width: "140px",
+    },
+    {
+      name: "ID",
+      selector: (row) => `#${row.id}`,
+      sortable: true,
+      width: "90px",
+    },
+    {
+      name: "Title",
+      selector: (row) => row.title,
+      sortable: true,
+      grow: 2,
+    },
+    {
+      name: "Description",
+      cell: (row) => (
+        <span className="text-sm text-gray-600">
+          {row.description.length > 120
+            ? row.description.slice(0, 120) + "..."
+            : row.description}
+        </span>
+      ),
+      grow: 3,
+    },
+    {
+      name: "Status",
+      cell: (row) => (
+        <button
+          onClick={() => handleStatusToggle(row.id, row.is_active)}
+          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+            row.is_active
+              ? "bg-green-100 text-green-800"
+              : "bg-red-100 text-red-800"
+          }`}
+        >
+          {row.is_active ? (
+            <>
+              <Eye size={12} className="mr-1" /> Active
+            </>
+          ) : (
+            <>
+              <EyeOff size={12} className="mr-1" /> Inactive
+            </>
+          )}
+        </button>
+      ),
+      width: "140px",
+    },
+    {
+      name: "Created",
+      selector: (row) => new Date(row.created_at).toLocaleDateString(),
+      sortable: true,
+      width: "140px",
+    },
+    {
+      name: "Actions",
+      cell: (row) => (
+        <div className="flex space-x-2">
+          <button
+            onClick={() => handleEdit(row)}
+            className="p-2 hover:bg-gray-100 rounded-lg"
+          >
+            <Edit2 size={16} />
+          </button>
+          <button
+            onClick={() => handleDelete(row.id)}
+            className="p-2 hover:bg-red-50 text-red-600 rounded-lg"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
+      ),
+      ignoreRowClick: true,
+      button: true,
+      width: "140px",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-6">
@@ -470,125 +570,16 @@ const HandleWhatWeDoList = () => {
               </button>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Sort
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Title
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Description
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Created
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {whatWeDoList
-                    .sort((a, b) => a.sort_order - b.sort_order)
-                    .map((item) => (
-                      <tr key={item.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleSortOrder(item.id, "up")}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Move up"
-                            >
-                              <ChevronUp className="w-4 h-4 text-gray-600" />
-                            </button>
-                            <span className="text-sm text-gray-900 font-medium w-8 text-center">
-                              {item.sort_order}
-                            </span>
-                            <button
-                              onClick={() => handleSortOrder(item.id, "down")}
-                              className="p-1 hover:bg-gray-100 rounded"
-                              title="Move down"
-                            >
-                              <ChevronDown className="w-4 h-4 text-gray-600" />
-                            </button>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            #{item.id}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {item.title}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-600 max-w-md">
-                            {item.description.length > 120
-                              ? `${item.description.substring(0, 120)}...`
-                              : item.description}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() =>
-                              handleStatusToggle(item.id, item.is_active)
-                            }
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              item.is_active
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {item.is_active ? (
-                              <>
-                                <Eye className="w-3 h-3 mr-1" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="w-3 h-3 mr-1" />
-                                Inactive
-                              </>
-                            )}
-                          </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(item.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Edit"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item.id)}
-                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
+            <div className="overflow-x-auto ">
+              <DataTable
+                columns={columns}
+                data={whatWeDoList}
+                pagination
+                highlightOnHover
+                responsive
+                persistTableHead
+                defaultSortFieldId={2}
+              />
             </div>
           )}
         </div>

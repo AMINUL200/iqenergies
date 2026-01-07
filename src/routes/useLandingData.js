@@ -9,8 +9,11 @@ export const useLandingData = () => {
   const [data, setData] = useState({
     hero: null,
     about: null,
-    whatWeDo: [],
-    solution: [],
+    whatWeDo: null,
+    solution: null,
+    business: null,
+    services: null,
+    product: null,
   });
 
   const [loading, setLoading] = useState(true);
@@ -24,7 +27,10 @@ export const useLandingData = () => {
         hero: api.get(`${API_URL}/banners`),
         about: api.get(`${API_URL}/about`),
         whatWeDo: api.get(`${API_URL}/what-we-all`),
-        solution:api.get(`${API_URL}/our-solution-all`),
+        solution: api.get(`${API_URL}/our-solution-all`),
+        business: api.get(`${API_URL}/business-verticals`),
+        services: api.get(`${API_URL}/services`),
+        product: api.get(`${API_URL}/show-products`),
       };
 
       const results = await Promise.allSettled(
