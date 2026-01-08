@@ -23,13 +23,13 @@ import {
   Bell,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { getCartCount } from "../../utils/cart";
 
 const Navbar = ({ toggleMenu }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [scrolled, setScrolled] = useState(false);
-  const [cartCount, setCartCount] = useState(3);
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Changed to true for testing
   const [darkMode, setDarkMode] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -39,8 +39,25 @@ const Navbar = ({ toggleMenu }) => {
   const userDropdownRef = useRef(null);
   const mobileUserDropdownRef = useRef(null);
 
-  /* ================= USER DATA (Mock - Replace with real data) ================= */
+  /* ================= cart count) ================= */
+  const [cartCount, setCartCount] = useState(0);
 
+  // Initialize cart count
+  useEffect(() => {
+    updateCartCount();
+
+    // Listen for cart updates
+    window.addEventListener("cartUpdated", updateCartCount);
+
+    return () => {
+      window.removeEventListener("cartUpdated", updateCartCount);
+    };
+  }, []);
+
+  const updateCartCount = () => {
+    const count = getCartCount();
+    setCartCount(count);
+  };
 
   /* ================= BRAND COLORS ================= */
   const colors = {
@@ -559,7 +576,6 @@ const Navbar = ({ toggleMenu }) => {
                       style={{ backgroundColor: colors.primary }}
                     >
                       {getInitials(user?.name)}
-                      
                     </div>
                   )}
                 </button>

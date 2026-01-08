@@ -19,6 +19,9 @@ import {
   Filter,
   SlidersHorizontal,
   Menu,
+  Plus,
+  Minus,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/app";
@@ -86,7 +89,7 @@ const getProductIcon = (productTitle, categoryName) => {
   if (lowerTitle.includes("wind")) return Wind;
   if (lowerTitle.includes("hydro") || lowerTitle.includes("water"))
     return Droplets;
-  if (lowerTitle.includes("battery") || lowerTitle.includes("storage"))
+  if (lowerTitle.includes("battery") || lowerName.includes("storage"))
     return Battery;
   if (lowerTitle.includes("charge") || lowerTitle.includes("controller"))
     return Zap;
@@ -190,6 +193,63 @@ const getCategoryTheme = (categoryName) => {
   return categoryThemes.default;
 };
 
+// Cart utility functions
+const cartUtils = {
+  // Get cart from localStorage
+  getCart: () => {
+    const cart = localStorage.getItem("cart");
+    return cart ? JSON.parse(cart) : {};
+  },
+
+  // Save cart to localStorage
+  saveCart: (cart) => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  },
+
+  // Add or update product in cart
+  addToCart: (product, quantity = 1) => {
+    const cart = cartUtils.getCart();
+    
+    if (cart[product.id]) {
+      cart[product.id].quantity += quantity;
+    } else {
+      cart[product.id] = {
+        product: product,
+        quantity: quantity,
+        addedAt: new Date().toISOString(),
+      };
+    }
+    
+    cartUtils.saveCart(cart);
+    return cart;
+  },
+
+  // Update quantity
+  updateQuantity: (productId, quantity) => {
+    const cart = cartUtils.getCart();
+    
+    if (quantity <= 0) {
+      delete cart[productId];
+    } else if (cart[productId]) {
+      cart[productId].quantity = quantity;
+    }
+    
+    cartUtils.saveCart(cart);
+    return cart;
+  },
+
+  // Get quantity for a product
+  getProductQuantity: (productId) => {
+    const cart = cartUtils.getCart();
+    return cart[productId]?.quantity || 0;
+  },
+
+  // Dispatch cart update event
+  dispatchCartUpdate: () => {
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+  },
+};
+
 const ProductPage = () => {
   const [productData, setProductData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -199,6 +259,8 @@ const ProductPage = () => {
   const [sortBy, setSortBy] = useState("default");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [cartQuantities, setCartQuantities] = useState({});
+  const [addingToCart, setAddingToCart] = useState({});
   const navigate = useNavigate();
 
   // Fetch product data
@@ -206,11 +268,8 @@ const ProductPage = () => {
     const fetchProducts = async () => {
       try {
         setLoading(true);
-        // Replace this with your actual API call
         const response = await api.get("/show-products");
         const data = await response.data.data;
-        console.log(response.data.data);
-        
         setProductData(data);
 
         // Process categories from data
@@ -248,6 +307,26 @@ const ProductPage = () => {
 
     fetchProducts();
   }, []);
+
+  // Load cart quantities on component mount and listen for updates
+  useEffect(() => {
+    loadCartQuantities();
+    
+    window.addEventListener('cartUpdated', loadCartQuantities);
+    
+    return () => {
+      window.removeEventListener('cartUpdated', loadCartQuantities);
+    };
+  }, []);
+
+  const loadCartQuantities = () => {
+    const cart = cartUtils.getCart();
+    const quantities = {};
+    Object.keys(cart).forEach(productId => {
+      quantities[productId] = cart[productId].quantity;
+    });
+    setCartQuantities(quantities);
+  };
 
   // Get current theme based on active tab
   const getCurrentTheme = () => {
@@ -305,6 +384,7 @@ const ProductPage = () => {
       category: productType,
       slug: product.slug,
       product_type: product.product_type,
+      originalProduct: product, // Store original product data for cart
     };
   };
 
@@ -336,16 +416,82 @@ const ProductPage = () => {
     ...new Set(processedProducts.map((p) => p.category)),
   ];
 
+  // Cart Functions
+  const getProductQuantity = (productId) => {
+    return cartQuantities[productId] || 0;
+  };
+
+  const handleAddToCart = async (product) => {
+    try {
+      setAddingToCart(prev => ({ ...prev, [product.id]: true }));
+      
+      cartUtils.addToCart(product, 1);
+      
+      // Update local state
+      setCartQuantities(prev => ({
+        ...prev,
+        [product.id]: (prev[product.id] || 0) + 1
+      }));
+
+      // Notify other components
+      cartUtils.dispatchCartUpdate();
+
+      console.log(`Added ${product.title} to cart`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  const incrementQuantity = (product) => {
+    const currentQuantity = getProductQuantity(product.id);
+    const newQuantity = currentQuantity + 1;
+    
+    cartUtils.updateQuantity(product.id, newQuantity);
+    
+    setCartQuantities(prev => ({
+      ...prev,
+      [product.id]: newQuantity
+    }));
+    
+    cartUtils.dispatchCartUpdate();
+  };
+
+  const decrementQuantity = (product) => {
+    const currentQuantity = getProductQuantity(product.id);
+    if (currentQuantity > 0) {
+      const newQuantity = currentQuantity - 1;
+      
+      cartUtils.updateQuantity(product.id, newQuantity);
+      
+      if (newQuantity === 0) {
+        setCartQuantities(prev => {
+          const updated = { ...prev };
+          delete updated[product.id];
+          return updated;
+        });
+      } else {
+        setCartQuantities(prev => ({
+          ...prev,
+          [product.id]: newQuantity
+        }));
+      }
+      
+      cartUtils.dispatchCartUpdate();
+    }
+  };
+
   const colors = getCurrentTheme();
 
   if (loading) {
-    return <PageLoader/>;
+    return <PageLoader />;
   }
 
   if (productData.length === 0) {
     return (
       <div
-        className="min-h-screen pt-20 md:pt-30"
+        className="min-h-screen pt-40 md:pt-30"
         style={{ backgroundColor: colors.background }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
@@ -388,9 +534,75 @@ const ProductPage = () => {
     );
   }
 
+  // Cart Button Component
+  const CartButton = ({ product }) => {
+    const quantity = getProductQuantity(product.id);
+    const isLoading = addingToCart[product.id];
+    const colors = getCurrentTheme();
+
+    if (quantity === 0) {
+      return (
+        <button
+          onClick={() => handleAddToCart(product)}
+          disabled={isLoading || !product.inStock}
+          className={`w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold text-white 
+            transition-all hover:scale-105 flex items-center justify-center 
+            gap-1 sm:gap-2 text-sm flex-1 ${product.inStock ? colors.button : 'bg-gray-400 cursor-not-allowed'}`}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 animate-spin" />
+              <span>Adding...</span>
+            </>
+          ) : (
+            <>
+              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>{product.inStock ? "Add to Cart" : "Out of Stock"}</span>
+            </>
+          )}
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+        <button
+          onClick={() => decrementQuantity(product)}
+          disabled={isLoading}
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
+            ${isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-red-500/20 hover:bg-red-500/30'}`}
+        >
+          {isLoading ? (
+            <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
+          ) : (
+            <Minus className="w-3 h-3 text-red-400" />
+          )}
+        </button>
+
+        <div className="flex flex-col items-center">
+          <span className="text-sm font-bold text-black">{quantity}</span>
+          <span className="text-xs text-gray-400">in cart</span>
+        </div>
+
+        <button
+          onClick={() => incrementQuantity(product)}
+          disabled={isLoading}
+          className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
+            ${isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-green-500/20 hover:bg-green-500/30'}`}
+        >
+          {isLoading ? (
+            <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
+          ) : (
+            <Plus className="w-3 h-3 text-green-400" />
+          )}
+        </button>
+      </div>
+    );
+  };
+
   return (
     <div
-      className="min-h-screen pt-20 md:pt-30"
+      className="min-h-screen pt-40 md:pt-30"
       style={{ backgroundColor: colors.background }}
     >
       {/* Main Content */}
@@ -399,7 +611,7 @@ const ProductPage = () => {
         <div className="md:hidden mb-4">
           <button
             onClick={() => setShowMobileFilters(!showMobileFilters)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-white shadow-md"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-semibold text-black shadow-md border-1 border-amber-950"
             style={{ background: colors.button }}
           >
             <Filter className="w-5 h-5" />
@@ -612,6 +824,15 @@ const ProductPage = () => {
                       </div>
                     </div>
 
+                    {/* Cart Quantity Badge */}
+                    {getProductQuantity(product.id) > 0 && (
+                      <div className="absolute top-3 right-3">
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
+                          {getProductQuantity(product.id)} in cart
+                        </div>
+                      </div>
+                    )}
+
                     {/* Rating */}
                     {product.rating > 0 && (
                       <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
@@ -690,25 +911,7 @@ const ProductPage = () => {
                       </div>
 
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <button
-                          onClick={() => console.log("Add to cart:", product)}
-                          className="px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold text-white transition-all hover:scale-105 flex items-center justify-center gap-1 sm:gap-2 text-sm flex-1"
-                          style={{
-                            background: colors.button,
-                            opacity: product.inStock ? 1 : 0.5,
-                            cursor: product.inStock ? "pointer" : "not-allowed",
-                          }}
-                          disabled={!product.inStock}
-                        >
-                          {product.inStock ? (
-                            <>
-                              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                              <span>Add to Cart</span>
-                            </>
-                          ) : (
-                            "Notify Me"
-                          )}
-                        </button>
+                        <CartButton product={product} />
 
                         <button
                           onClick={() =>
@@ -740,7 +943,7 @@ const ProductPage = () => {
                 >
                   <div className="flex flex-col md:flex-row">
                     {/* Image */}
-                    <div className="md:w-1/4 h-48 md:h-auto relative">
+                    <div className="md:w-1/4 h-52 md:h-56 lg:h-60 relative overflow-hidden flex-shrink-0">
                       <img
                         src={product.image}
                         alt={product.title}
@@ -761,6 +964,15 @@ const ProductPage = () => {
                           {product.category}
                         </div>
                       </div>
+                      
+                      {/* Cart Quantity Badge */}
+                      {getProductQuantity(product.id) > 0 && (
+                        <div className="absolute top-3 right-3">
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
+                            {getProductQuantity(product.id)} in cart
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Content */}
@@ -829,20 +1041,7 @@ const ProductPage = () => {
                             ₹ {product.price.toLocaleString("en-IN")}
                           </div>
                           <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
-                            <button
-                              onClick={() =>
-                                console.log("Add to cart:", product)
-                              }
-                              className="px-3 py-2 md:px-4 md:py-2 rounded-lg font-semibold text-white transition-all hover:scale-105 flex items-center justify-center gap-1 md:gap-2 text-sm"
-                              style={{
-                                background: colors.button,
-                                opacity: product.inStock ? 1 : 0.5,
-                              }}
-                              disabled={!product.inStock}
-                            >
-                              <ShoppingCart className="w-3 h-3 md:w-4 md:h-4" />
-                              {product.inStock ? "Add to Cart" : "Notify Me"}
-                            </button>
+                            <CartButton product={product} />
                             <button
                               onClick={() =>
                                 navigate(

@@ -12,12 +12,16 @@ import {
   Home,
   Factory,
   Cpu,
+  Plus,
+  Minus,
+  ShoppingCart,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { addToCart, updateQuantity, getCartCount } from "../../utils/cart";
 
 /* ================= ICON MAPPING ================= */
 const iconMapping = {
-  // Default icons for common energy categories
   solar: Sun,
   "solar energy": Sun,
   "solar-energy": Sun,
@@ -71,7 +75,6 @@ const getCategoryIcon = (categoryName) => {
 // Function to get theme configuration based on category
 const getCategoryTheme = (categoryKey) => {
   const categoryThemes = {
-    // Predefined themes for common categories
     solar: {
       gradient: "from-amber-500 to-orange-600",
       border: "border-amber-500/30",
@@ -162,8 +165,21 @@ const ProductSection = ({ productData = [] }) => {
   const [activeTab, setActiveTab] = useState(null);
   const [tabs, setTabs] = useState([]);
   const [productsByCategory, setProductsByCategory] = useState({});
-
+  const [cartQuantities, setCartQuantities] = useState({}); // Store only quantities locally for UI
+  const [addingToCart, setAddingToCart] = useState({}); // Track loading state for each product
   const navigate = useNavigate();
+
+  // Initialize cart quantities from localStorage on component mount
+  useEffect(() => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || {};
+    const quantities = {};
+    
+    Object.keys(cart).forEach(productId => {
+      quantities[productId] = cart[productId].quantity;
+    });
+    
+    setCartQuantities(quantities);
+  }, []);
 
   // Process product data to extract categories and group products
   useEffect(() => {
@@ -261,6 +277,87 @@ const ProductSection = ({ productData = [] }) => {
       setActiveTab(categoryTabs[0].key);
     }
   }, [productData]);
+
+  // ================= CART FUNCTIONS =================
+
+  // Get current quantity for a product from local state
+  const getProductQuantity = (productId) => {
+    return cartQuantities[productId] || 0;
+  };
+
+  // Add to cart (stores in localStorage)
+  const handleAddToCart = async (product) => {
+    try {
+      setAddingToCart(prev => ({ ...prev, [product.id]: true }));
+      
+      // Add to localStorage
+      addToCart(product, 1);
+      
+      // Update local state
+      setCartQuantities(prev => ({
+        ...prev,
+        [product.id]: (prev[product.id] || 0) + 1
+      }));
+
+      // Dispatch custom event to notify navbar about cart update
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+      // Optional: Show success message
+      console.log(`Added ${product.title} to cart`);
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    } finally {
+      setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+    }
+  };
+
+  // Increment quantity
+  const incrementQuantity = (product) => {
+    const currentQuantity = getProductQuantity(product.id);
+    const newQuantity = currentQuantity + 1;
+    
+    updateQuantity(product.id, newQuantity);
+    
+    setCartQuantities(prev => ({
+      ...prev,
+      [product.id]: newQuantity
+    }));
+    
+    window.dispatchEvent(new CustomEvent('cartUpdated'));
+  };
+
+  // Decrement quantity
+  const decrementQuantity = (product) => {
+    const currentQuantity = getProductQuantity(product.id);
+    if (currentQuantity > 0) {
+      const newQuantity = currentQuantity - 1;
+      
+      if (newQuantity === 0) {
+        // Remove from localStorage
+        const cart = JSON.parse(localStorage.getItem("cart")) || {};
+        delete cart[product.id];
+        localStorage.setItem("cart", JSON.stringify(cart));
+        
+        // Update local state
+        setCartQuantities(prev => {
+          const updated = { ...prev };
+          delete updated[product.id];
+          return updated;
+        });
+      } else {
+        updateQuantity(product.id, newQuantity);
+        
+        setCartQuantities(prev => ({
+          ...prev,
+          [product.id]: newQuantity
+        }));
+      }
+      
+      window.dispatchEvent(new CustomEvent('cartUpdated'));
+    }
+  };
+
+  // ================= END CART FUNCTIONS =================
 
   // Get products for active tab
   const getActiveProducts = () => {
@@ -362,6 +459,8 @@ const ProductSection = ({ productData = [] }) => {
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {activeProducts.map((product) => {
               const Icon = product.icon;
+              const quantity = getProductQuantity(product.id);
+              const isLoading = addingToCart[product.id];
 
               return (
                 <div
@@ -401,29 +500,106 @@ const ProductSection = ({ productData = [] }) => {
                       </p>
                     )}
 
-                    
-
-                    {/* Actions */}
-                    <div className="flex items-center justify-between gap-3">
-                      {/* Add to Cart */}
-                      <button
-                        onClick={() => console.log("Add to cart:", product)}
-                        className={`flex items-center gap-2 font-semibold ${theme.text} cursor-pointer hover:opacity-80 transition-opacity`}
-                      >
-                        Add to Cart
-                      </button>
-
-                      {/* More Details */}
-                      <button
-                        onClick={() =>
-                          navigate(`/product/${product.slug || product.id}`)
-                        }
-                        className={`flex items-center gap-2 font-semibold ${theme.text} cursor-pointer hover:opacity-80 transition-opacity`}
-                      >
-                        Details
-                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                      </button>
+                    {/* Price */}
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-lg font-bold text-white">
+                        ₹{product.price.toLocaleString('en-IN')}
+                      </span>
+                      {product.rating > 0 && (
+                        <div className="flex items-center gap-1">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-gray-300 text-sm">
+                            {product.rating}
+                          </span>
+                        </div>
+                      )}
                     </div>
+
+                    {/* Cart Controls */}
+                    <div className="mt-4">
+                      {quantity === 0 ? (
+                        // Add to Cart Button (when quantity is 0)
+                        <button
+                          onClick={() => handleAddToCart(product)}
+                          disabled={isLoading}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all
+                            ${isLoading 
+                              ? 'bg-gray-600 cursor-not-allowed' 
+                              : `bg-gradient-to-r ${theme.gradient} hover:opacity-90`
+                            }`}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Adding...</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingCart className="w-4 h-4" />
+                              <span>Add to Cart</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        // Quantity Controls (when quantity > 0)
+                        <div className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+                          {/* Decrement Button */}
+                          <button
+                            onClick={() => decrementQuantity(product)}
+                            disabled={isLoading}
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors
+                              ${isLoading 
+                                ? 'bg-gray-700 cursor-not-allowed' 
+                                : 'bg-red-500/20 hover:bg-red-500/30'
+                              }`}
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+                            ) : (
+                              <Minus className="w-4 h-4 text-red-400" />
+                            )}
+                          </button>
+
+                          {/* Quantity Display */}
+                          <div className="flex flex-col items-center">
+                            <span className="text-lg font-bold text-white">
+                              {quantity}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              in cart
+                            </span>
+                          </div>
+
+                          {/* Increment Button */}
+                          <button
+                            onClick={() => incrementQuantity(product)}
+                            disabled={isLoading}
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors
+                              ${isLoading 
+                                ? 'bg-gray-700 cursor-not-allowed' 
+                                : 'bg-green-500/20 hover:bg-green-500/30'
+                              }`}
+                          >
+                            {isLoading ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+                            ) : (
+                              <Plus className="w-4 h-4 text-green-400" />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* View Details Button */}
+                    <button
+                      onClick={() =>
+                        navigate(`/product/${product.slug || product.id}`)
+                      }
+                      className={`w-full mt-3 flex items-center justify-center gap-2 font-semibold ${theme.text} cursor-pointer hover:opacity-80 transition-opacity py-2`}
+                    >
+                      View Details
+                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                    </button>
                   </div>
                 </div>
               );
