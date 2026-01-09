@@ -14,8 +14,6 @@ import {
   Star,
   Info,
   FileText,
-  Percent,
-  Hash,
 } from "lucide-react";
 import AdminLoader from "../../../component/admin/AdminLoader";
 import { api } from "../../../utils/app";
@@ -24,7 +22,7 @@ import CustomTextEditor from "../../../component/form/TextEditor";
 const HandleProduct = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [hsnCodes, setHsnCodes] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
@@ -55,12 +53,11 @@ const HandleProduct = () => {
 
   const [formData, setFormData] = useState({
     category_id: "",
-    hsn_code: "",
+    sub_category_id: "",
     title: "",
     short_description: "",
     description: "",
     price: "",
-    discount_percentage: "",
     rating: "",
     delivery_time: "",
     product_type: "",
@@ -82,9 +79,9 @@ const HandleProduct = () => {
       const categoriesResponse = await api.get("/admin/category-list");
       setCategories(categoriesResponse.data.data || []);
 
-      // Fetch HSN codes
-      const hsnResponse = await api.get("/admin/gst-rates");
-      setHsnCodes(hsnResponse.data.data || []);
+      // Fetch subcategories
+      const subcategoriesResponse = await api.get("/admin/sub-category-list");
+      setSubcategories(subcategoriesResponse.data.data || []);
 
       // Fetch products
       const productsResponse = await api.get("/admin/product-list");
@@ -95,52 +92,6 @@ const HandleProduct = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Get selected HSN code details
-  const getSelectedHsnDetails = () => {
-    if (!formData.hsn_code) return null;
-    return hsnCodes.find((hsn) => hsn.hsn_code === formData.hsn_code);
-  };
-
-  // Calculate selling price
-  const calculateSellingPrice = () => {
-    const price = parseFloat(formData.price) || 0;
-    const discountPercentage = parseFloat(formData.discount_percentage) || 0;
-    
-    if (price === 0) return 0;
-    
-    const discountAmount = (price * discountPercentage) / 100;
-    const sellingPrice = price - discountAmount;
-    
-    return sellingPrice.toFixed(2);
-  };
-
-  // Calculate GST breakdown (GST is already included in base price)
-  const calculateGSTBreakdown = () => {
-    const sellingPrice = parseFloat(calculateSellingPrice()) || 0;
-    const hsnDetails = getSelectedHsnDetails();
-    
-    if (!hsnDetails || sellingPrice === 0) {
-      return {
-        gstRate: 0,
-        gstIncluded: 0,
-        basePriceWithoutGST: sellingPrice
-      };
-    }
-    
-    const gstRate = parseFloat(hsnDetails.gst_rate) || 0;
-    
-    // Calculate GST included in the price
-    // Formula: GST Amount = (Selling Price * GST Rate) / (100 + GST Rate)
-    const gstIncluded = (sellingPrice * gstRate) / (100 + gstRate);
-    const basePriceWithoutGST = sellingPrice - gstIncluded;
-    
-    return {
-      gstRate,
-      gstIncluded: gstIncluded.toFixed(2),
-      basePriceWithoutGST: basePriceWithoutGST.toFixed(2)
-    };
   };
 
   // Get product images from product data
@@ -155,32 +106,48 @@ const HandleProduct = () => {
     return product?.information || null;
   };
 
+  // Filter subcategories based on selected category
+  const getFilteredSubcategories = () => {
+    if (!formData.category_id) return [];
+
+    return subcategories.filter(
+      (sub) => Number(sub.category_id) === Number(formData.category_id)
+    );
+  };
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
 
-    if (type === "checkbox") {
-      setFormData((prev) => ({
+    setFormData((prev) => {
+      let updated = {
         ...prev,
-        [name]: checked,
-      }));
-    } else if (name === "discount_percentage") {
-      // Validate discount percentage (0-100)
-      if (value === "" || /^[0-9]*\.?[0-9]*$/.test(value)) {
-        const numValue = parseFloat(value);
-        if (value === "" || (numValue >= 0 && numValue <= 100)) {
-          setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        }
+        [name]: type === "checkbox" ? checked : value,
+      };
+
+      // When category changes, reset subcategory properly
+      if (name === "category_id") {
+        updated.sub_category_id = "";
       }
-    } else {
+
+      return updated;
+    });
+  };
+
+  useEffect(() => {
+    if (!formData.category_id) return;
+
+    const filtered = subcategories.filter(
+      (sub) => Number(sub.category_id) === Number(formData.category_id)
+    );
+
+    // Auto-select first subcategory if none selected
+    if (filtered.length > 0 && !formData.sub_category_id) {
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        sub_category_id: String(filtered[0].id),
       }));
     }
-  };
+  }, [formData.category_id, subcategories]);
 
   const handleAddNew = () => {
     if (categories.length === 0) {
@@ -190,12 +157,11 @@ const HandleProduct = () => {
 
     setFormData({
       category_id: categories[0]?.id || "",
-      hsn_code: "",
+      sub_category_id: "",
       title: "",
       short_description: "",
       description: "",
       price: "",
-      discount_percentage: "",
       rating: "",
       delivery_time: "",
       product_type: "",
@@ -209,12 +175,11 @@ const HandleProduct = () => {
   const handleEdit = (product) => {
     setFormData({
       category_id: String(product.category_id),
-      hsn_code: product.hsn_code || "",
+      sub_category_id: String(product.sub_category_id),
       title: product.title || "",
       short_description: product.short_description || "",
       description: product.description || "",
       price: product.price || "",
-      discount_percentage: product.discount_percentage || "",
       rating: product.rating || "",
       delivery_time: product.delivery_time || "",
       product_type: product.product_type || "",
@@ -237,12 +202,11 @@ const HandleProduct = () => {
       // Prepare data for API
       const data = {
         category_id: formData.category_id,
-        hsn_code: formData.hsn_code,
+        sub_category_id: Number(formData.sub_category_id),
         title: formData.title.trim(),
         short_description: formData.short_description.trim(),
         description: formData.description.trim(),
         price: parseFloat(formData.price),
-        discount_percentage: parseFloat(formData.discount_percentage) || 0,
         rating: parseFloat(formData.rating) || 0,
         delivery_time: formData.delivery_time.trim(),
         product_type: formData.product_type.trim(),
@@ -268,12 +232,11 @@ const HandleProduct = () => {
         setEditingId(null);
         setFormData({
           category_id: categories[0]?.id || "",
-          hsn_code: "",
+          sub_category_id: "",
           title: "",
           short_description: "",
           description: "",
           price: "",
-          discount_percentage: "",
           rating: "",
           delivery_time: "",
           product_type: "",
@@ -721,10 +684,6 @@ const HandleProduct = () => {
     ? getProductInformation(selectedProduct.id)
     : null;
 
-  const hsnDetails = getSelectedHsnDetails();
-  const sellingPrice = calculateSellingPrice();
-  const gstBreakdown = calculateGSTBreakdown();
-
   return (
     <div className="min-h-screen bg-gray-100 p-4 md:p-6">
       <div className="max-w-7xl mx-auto">
@@ -766,12 +725,11 @@ const HandleProduct = () => {
                     setEditingId(null);
                     setFormData({
                       category_id: categories[0]?.id || "",
-                      hsn_code: "",
+                      sub_category_id: "",
                       title: "",
                       short_description: "",
                       description: "",
                       price: "",
-                      discount_percentage: "",
                       rating: "",
                       delivery_time: "",
                       product_type: "",
@@ -786,63 +744,48 @@ const HandleProduct = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Category Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    name="category_id"
-                    value={formData.category_id}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                {/* Category & Subcategory Selection */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Category *
+                    </label>
+                    <select
+                      name="category_id"
+                      value={formData.category_id}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
+                    >
+                      <option value="">Select a category</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                {/* HSN Code Selection */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
-                    HSN Code *
-                  </label>
-                  <select
-                    name="hsn_code"
-                    value={formData.hsn_code}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
-                  >
-                    <option value="">Select HSN Code</option>
-                    {hsnCodes.map((hsn) => (
-                      <option key={hsn.id} value={hsn.hsn_code}>
-                        {hsn.hsn_code} - {hsn.description} ({hsn.gst_rate}% GST)
-                      </option>
-                    ))}
-                  </select>
-                  {hsnDetails && (
-                    <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="text-sm font-medium text-blue-800">
-                            HSN: {hsnDetails.hsn_code}
-                          </div>
-                          <div className="text-sm text-gray-700">
-                            {hsnDetails.description}
-                          </div>
-                        </div>
-                        <div className="text-sm font-medium text-blue-800">
-                          GST Rate: {hsnDetails.gst_rate}%
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-900 mb-2">
+                      Subcategory
+                    </label>
+                    <select
+                      name="sub_category_id"
+                      value={formData.sub_category_id}
+                      onChange={handleInputChange}
+                      required
+                      disabled={!formData.category_id}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg"
+                    >
+                      <option value="">Select a subcategory</option>
+                      {getFilteredSubcategories().map((sub) => (
+                        <option key={sub.id} value={sub.id}>
+                          {sub.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Title & Product Type */}
@@ -878,7 +821,7 @@ const HandleProduct = () => {
                   </div>
                 </div>
 
-                {/* Price & Discount */}
+                {/* Price & Rating */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">
@@ -895,39 +838,8 @@ const HandleProduct = () => {
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
                       placeholder="45000.00"
                     />
-                    <p className="text-xs text-gray-500 mt-2">
-                      Price includes GST
-                    </p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Discount Percentage (%)
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Percent className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="text"
-                        name="discount_percentage"
-                        value={formData.discount_percentage}
-                        onChange={handleInputChange}
-                        className="w-full pl-10 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
-                        placeholder="10"
-                      />
-                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                        <span className="text-gray-500">%</span>
-                      </div>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      0-100% (Optional)
-                    </p>
-                  </div>
-                </div>
-
-                {/* Rating & Delivery Time */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-900 mb-2">
                       Rating (0-5)
@@ -944,82 +856,23 @@ const HandleProduct = () => {
                       placeholder="4.8"
                     />
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-900 mb-2">
-                      Delivery Time *
-                    </label>
-                    <input
-                      type="text"
-                      name="delivery_time"
-                      value={formData.delivery_time}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
-                      placeholder="e.g., 3-5 days"
-                    />
-                  </div>
                 </div>
 
-                {/* Price Calculation Summary */}
-                {formData.price && (
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">
-                      Price Calculation (Inclusive of GST)
-                    </h3>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Base Price (including GST):</span>
-                        <span className="text-sm font-medium text-gray-900">
-                          ₹{parseFloat(formData.price || 0).toFixed(2)}
-                        </span>
-                      </div>
-                      
-                      {formData.discount_percentage && parseFloat(formData.discount_percentage) > 0 && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Discount ({formData.discount_percentage}%):</span>
-                            <span className="text-sm font-medium text-red-600">
-                              - ₹{((parseFloat(formData.price || 0) * parseFloat(formData.discount_percentage || 0)) / 100).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between border-t border-gray-200 pt-2">
-                            <span className="text-sm font-medium text-gray-700">Selling Price (including GST):</span>
-                            <span className="text-sm font-bold text-green-600">
-                              ₹{sellingPrice}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                      
-                      {hsnDetails && parseFloat(sellingPrice) > 0 && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Base Price without GST:</span>
-                            <span className="text-sm font-medium text-gray-900">
-                              ₹{gstBreakdown.basePriceWithoutGST}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">GST ({hsnDetails.gst_rate}%) included:</span>
-                            <span className="text-sm font-medium text-gray-900">
-                              ₹{gstBreakdown.gstIncluded}
-                            </span>
-                          </div>
-                          <div className="flex justify-between border-t border-gray-200 pt-2">
-                            <span className="text-sm font-bold text-gray-900">Final Selling Price (including GST):</span>
-                            <span className="text-sm font-bold text-blue-600">
-                              ₹{sellingPrice}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500 mt-2">
-                            Note: GST of {hsnDetails.gst_rate}% is already included in the price
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {/* Delivery Time */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                    Delivery Time *
+                  </label>
+                  <input
+                    type="text"
+                    name="delivery_time"
+                    value={formData.delivery_time}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
+                    placeholder="e.g., 3-5 days"
+                  />
+                </div>
 
                 {/* Short Description */}
                 <div>
@@ -1130,12 +983,11 @@ const HandleProduct = () => {
                       setEditingId(null);
                       setFormData({
                         category_id: categories[0]?.id || "",
-                        hsn_code: "",
+                        sub_category_id: "",
                         title: "",
                         short_description: "",
                         description: "",
                         price: "",
-                        discount_percentage: "",
                         rating: "",
                         delivery_time: "",
                         product_type: "",
@@ -1231,12 +1083,8 @@ const HandleProduct = () => {
                       </button>
                     </div>
                   </div>
-                  <div
-                    className="text-sm text-gray-700 whitespace-pre-line mt-2"
-                    dangerouslySetInnerHTML={{
-                      __html: productInformation.information,
-                    }}
-                  ></div>
+                  <div className="text-sm text-gray-700 whitespace-pre-line mt-2" dangerouslySetInnerHTML={{__html:productInformation.information}}>
+                  </div>
                   <div className="text-xs text-gray-500 mt-3">
                     Last updated:{" "}
                     {new Date(
@@ -1602,8 +1450,8 @@ const HandleProduct = () => {
               </button>
             </div>
           ) : (
-            <div className="max-w-[400px] md:max-w-[700px] lg:max-w-[1140px] overflow-x-auto">
-              <table className="w-full min-w-[700px]">
+            <div className="overflow-x-auto">
+              <table className="w-full">
                 <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
@@ -1616,11 +1464,9 @@ const HandleProduct = () => {
                       Category
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
-                      HSN Code
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       Price
                     </th>
+
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                       Status
                     </th>
@@ -1639,171 +1485,132 @@ const HandleProduct = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {products.map((product) => {
-                    // Calculate selling price for display
-                    const basePrice = parseFloat(product.price) || 0;
-                    const discountPercentage = parseFloat(product.discount_percentage) || 0;
-                    const discountAmount = (basePrice * discountPercentage) / 100;
-                    const sellingPrice = basePrice - discountAmount;
-                    
-                    // Find HSN details for this product
-                    const productHsn = hsnCodes.find(hsn => hsn.hsn_code === product.hsn_code);
-                    let gstBreakdown = { gstRate: 0, gstIncluded: 0, basePriceWithoutGST: sellingPrice };
-                    
-                    if (productHsn && sellingPrice > 0) {
-                      const gstRate = parseFloat(productHsn.gst_rate) || 0;
-                      const gstIncluded = (sellingPrice * gstRate) / (100 + gstRate);
-                      const basePriceWithoutGST = sellingPrice - gstIncluded;
-                      gstBreakdown = {
-                        gstRate,
-                        gstIncluded: gstIncluded.toFixed(2),
-                        basePriceWithoutGST: basePriceWithoutGST.toFixed(2)
-                      };
-                    }
+                  {products.map((product) => (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          #{product.id}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {product.title}
+                        </div>
+                        <div className="text-xs text-gray-500 mt-1 line-clamp-4 ">
+                          {product.short_description}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          Type: {product.product_type}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900">
+                          {product.category?.name || "N/A"}
+                        </div>
+                        {product.sub_category && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Sub: {product.sub_category.name}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          ₹{parseFloat(product.price).toLocaleString("en-IN")}
+                        </div>
+                      </td>
 
-                    return (
-                      <tr key={product.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
-                            #{product.id}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {product.title}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1 line-clamp-4 ">
-                            {product.short_description}
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1">
-                            Type: {product.product_type}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="text-sm text-gray-900">
-                            {product.category?.name || "N/A"}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {product.hsn_code || "N/A"}
-                          </div>
-                          {productHsn && (
-                            <div className="text-xs text-gray-500">
-                              GST: {productHsn.gst_rate}%
-                            </div>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() =>
+                            handleStatusToggle(product.id, product.is_active)
+                          }
+                          className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                            product.is_active
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {product.is_active ? (
+                            <>
+                              <Eye className="w-3 h-3 mr-1" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3 h-3 mr-1" />
+                              Inactive
+                            </>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="space-y-1">
-                            <div className="text-sm font-medium text-gray-900">
-                              ₹{sellingPrice.toFixed(2)}
-                            </div>
-                            {discountPercentage > 0 && (
-                              <div className="text-xs text-green-600">
-                                After {discountPercentage}% off
-                              </div>
-                            )}
-                            {productHsn && (
-                              <div className="text-xs text-gray-500">
-                                Base: ₹{gstBreakdown.basePriceWithoutGST} + GST: ₹{gstBreakdown.gstIncluded}
-                              </div>
-                            )}
+                        </button>
+                        {product.is_preorder && (
+                          <div className="mt-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                              Pre-order
+                            </span>
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <button
-                            onClick={() =>
-                              handleStatusToggle(product.id, product.is_active)
-                            }
-                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
-                              product.is_active
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {product.is_active ? (
-                              <>
-                                <Eye className="w-3 h-3 mr-1" />
-                                Active
-                              </>
-                            ) : (
-                              <>
-                                <EyeOff className="w-3 h-3 mr-1" />
-                                Inactive
-                              </>
-                            )}
-                          </button>
-                          {product.is_preorder && (
-                            <div className="mt-1">
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                Pre-order
-                              </span>
-                            </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.information ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <FileText className="w-3 h-3 mr-1" />
+                              Added
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                              Not Added
+                            </span>
                           )}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {product.information ? (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                <FileText className="w-3 h-3 mr-1" />
-                                Added
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                Not Added
-                              </span>
-                            )}
+                        </div>
+                        <button
+                          onClick={() => handleOpenInfoForm(product)}
+                          className="mt-1 inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-900 text-white hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors"
+                        >
+                          <Info className="w-3 h-3 mr-1" />
+                          {product.information ? "Edit Info" : "Add Info"}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900">
+                          {product.images?.length || 0} image(s)
+                        </div>
+                        {product.images?.some((img) => img.is_primary) && (
+                          <div className="text-xs text-green-600">
+                            Primary set
                           </div>
+                        )}
+                        <button
+                          onClick={() => handleOpenImageForm(product)}
+                          className="mt-1 inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-900 text-white hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors"
+                        >
+                          <ImageIcon className="w-3 h-3 mr-1" />
+                          Manage Images
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        {new Date(product.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-2">
                           <button
-                            onClick={() => handleOpenInfoForm(product)}
-                            className="mt-1 inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-900 text-white hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors"
+                            onClick={() => handleEdit(product)}
+                            className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Edit Product"
                           >
-                            <Info className="w-3 h-3 mr-1" />
-                            {product.information ? "Edit Info" : "Add Info"}
+                            <Edit2 className="w-4 h-4" />
                           </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
-                            {product.images?.length || 0} image(s)
-                          </div>
-                          {product.images?.some((img) => img.is_primary) && (
-                            <div className="text-xs text-green-600">
-                              Primary set
-                            </div>
-                          )}
                           <button
-                            onClick={() => handleOpenImageForm(product)}
-                            className="mt-1 inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-gray-900 text-white hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors"
+                            onClick={() => handleDelete(product.id)}
+                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete Product"
                           >
-                            <ImageIcon className="w-3 h-3 mr-1" />
-                            Manage Images
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                          {new Date(product.created_at).toLocaleDateString()}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-2">
-                            <button
-                              onClick={() => handleEdit(product)}
-                              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                              title="Edit Product"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDelete(product.id)}
-                              className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                              title="Delete Product"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>

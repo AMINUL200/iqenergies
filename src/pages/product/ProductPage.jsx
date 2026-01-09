@@ -22,6 +22,7 @@ import {
   Plus,
   Minus,
   Loader2,
+  Percent,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/app";
@@ -29,7 +30,6 @@ import PageLoader from "../../component/common/PageLoader";
 
 /* ================= ICON MAPPING ================= */
 const iconMapping = {
-  // Default icons for common energy categories
   solar: Sun,
   "solar energy": Sun,
   "solar-energy": Sun,
@@ -89,7 +89,7 @@ const getProductIcon = (productTitle, categoryName) => {
   if (lowerTitle.includes("wind")) return Wind;
   if (lowerTitle.includes("hydro") || lowerTitle.includes("water"))
     return Droplets;
-  if (lowerTitle.includes("battery") || lowerName.includes("storage"))
+  if (lowerTitle.includes("battery") || lowerTitle.includes("storage"))
     return Battery;
   if (lowerTitle.includes("charge") || lowerTitle.includes("controller"))
     return Zap;
@@ -250,6 +250,23 @@ const cartUtils = {
   },
 };
 
+// Calculate discount percentage
+const calculateDiscountPercentage = (originalPrice, sellingPrice) => {
+  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice) return 0;
+  const discount = ((originalPrice - sellingPrice) / originalPrice) * 100;
+  return Math.round(discount * 10) / 10; // Round to 1 decimal place
+};
+
+// Format currency in Indian Rupees
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 const ProductPage = () => {
   const [productData, setProductData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -349,7 +366,7 @@ const ProductPage = () => {
     });
   };
 
-  // Process product for display
+  // Process product for display with updated pricing
   const processProduct = (product) => {
     // Find primary image
     const primaryImage =
@@ -369,6 +386,12 @@ const ProductPage = () => {
       if (lowerType.includes("utility")) productType = "industrial";
     }
 
+    // Parse prices
+    const originalPrice = parseFloat(product.price) || 0;
+    const sellingPrice = parseFloat(product.sell_price) || originalPrice;
+    const discountPercentage = parseFloat(product.discount_percentage) || 
+                              calculateDiscountPercentage(originalPrice, sellingPrice);
+
     return {
       id: product.id,
       title: product.title,
@@ -377,7 +400,9 @@ const ProductPage = () => {
         imageUrl ||
         "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800",
       icon: icon,
-      price: parseFloat(product.price) || 0,
+      originalPrice: originalPrice,
+      sellingPrice: sellingPrice,
+      discountPercentage: discountPercentage,
       rating: parseFloat(product.rating) || 0,
       inStock: !product.is_preorder,
       deliveryTime: product.delivery_time || "Not specified",
@@ -400,9 +425,9 @@ const ProductPage = () => {
     .sort((a, b) => {
       switch (sortBy) {
         case "price-low":
-          return a.price - b.price;
+          return a.sellingPrice - b.sellingPrice;
         case "price-high":
-          return b.price - a.price;
+          return b.sellingPrice - a.sellingPrice;
         case "rating":
           return b.rating - a.rating;
         default:
@@ -480,6 +505,46 @@ const ProductPage = () => {
       
       cartUtils.dispatchCartUpdate();
     }
+  };
+
+  // Price display component
+  const PriceDisplay = ({ product, isList = false }) => {
+    const colors = getCurrentTheme();
+    const hasDiscount = product.discountPercentage > 0;
+
+    return (
+      <div className={`flex flex-col ${isList ? 'mb-4' : 'mb-3'}`}>
+        {/* Selling Price - Large and prominent */}
+        <div className="flex items-center gap-2">
+          <span className={`font-bold ${isList ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`} style={{ color: colors.primary }}>
+            ₹{product.sellingPrice.toLocaleString("en-IN")}
+          </span>
+          
+          {/* Discount Badge */}
+          {hasDiscount && (
+            <div className={`flex items-center ${isList ? 'px-3 py-1' : 'px-2 py-0.5'} rounded-full font-bold`}
+              style={{ backgroundColor: '#FF6161', color: 'white' }}>
+              <Percent className={`${isList ? 'w-3 h-3' : 'w-2 h-2'} mr-1`} />
+              <span className={`${isList ? 'text-sm' : 'text-xs'}`}>
+                {product.discountPercentage}% off
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {/* Original Price with strikethrough */}
+        {hasDiscount && (
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-gray-500 ${isList ? 'text-lg' : 'text-base'} line-through`}>
+              ₹{product.originalPrice.toLocaleString("en-IN")}
+            </span>
+            <span className="text-sm text-gray-600">
+              ({formatCurrency(product.originalPrice - product.sellingPrice)} saved)
+            </span>
+          </div>
+        )}
+      </div>
+    );
   };
 
   const colors = getCurrentTheme();
@@ -824,9 +889,19 @@ const ProductPage = () => {
                       </div>
                     </div>
 
+                    {/* Discount Badge on Image */}
+                    {product.discountPercentage > 0 && (
+                      <div className="absolute top-3 right-3">
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
+                          <Percent className="w-2 h-2 mr-0.5" />
+                          {product.discountPercentage}% OFF
+                        </div>
+                      </div>
+                    )}
+
                     {/* Cart Quantity Badge */}
                     {getProductQuantity(product.id) > 0 && (
-                      <div className="absolute top-3 right-3">
+                      <div className="absolute bottom-3 left-3">
                         <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
                           {getProductQuantity(product.id)} in cart
                         </div>
@@ -835,7 +910,7 @@ const ProductPage = () => {
 
                     {/* Rating */}
                     {product.rating > 0 && (
-                      <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
+                      <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-full px-2 py-1">
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
                             <Star
@@ -875,12 +950,15 @@ const ProductPage = () => {
                       </div>
                     </div>
 
-                    <p
+                    {/* <p
                       className="text-xs sm:text-sm mb-4 sm:mb-5 line-clamp-3"
                       style={{ color: colors.textMuted }}
                     >
                       {product.description}
-                    </p>
+                    </p> */}
+
+                    {/* Price Display */}
+                    <PriceDisplay product={product} />
 
                     {/* Delivery Info */}
                     <div
@@ -896,20 +974,11 @@ const ProductPage = () => {
                       )}
                     </div>
 
-                    {/* Price & Actions */}
+                    {/* Actions */}
                     <div
                       className="flex flex-col gap-3 pt-4 border-t"
                       style={{ borderColor: colors.border }}
                     >
-                      <div className="flex items-center justify-between">
-                        <div
-                          className="text-lg sm:text-xl md:text-2xl font-bold"
-                          style={{ color: colors.primary }}
-                        >
-                          ₹ {product.price.toLocaleString("en-IN")}
-                        </div>
-                      </div>
-
                       <div className="flex flex-col sm:flex-row gap-2">
                         <CartButton product={product} />
 
@@ -953,7 +1022,18 @@ const ProductPage = () => {
                             "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop";
                         }}
                       />
-                      <div className="absolute top-3 left-3">
+                      {/* Discount Badge on Image */}
+                      {product.discountPercentage > 0 && (
+                        <div className="absolute top-3 right-3">
+                          <div className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-sm font-bold bg-red-500 text-white">
+                            <Percent className="w-3 h-3 mr-1" />
+                            {product.discountPercentage}% OFF
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Category Badge */}
+                      <div className="absolute bottom-3 left-3">
                         <div
                           className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold capitalize"
                           style={{
@@ -967,7 +1047,7 @@ const ProductPage = () => {
                       
                       {/* Cart Quantity Badge */}
                       {getProductQuantity(product.id) > 0 && (
-                        <div className="absolute top-3 right-3">
+                        <div className="absolute bottom-3 right-3">
                           <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
                             {getProductQuantity(product.id)} in cart
                           </div>
@@ -1005,6 +1085,9 @@ const ProductPage = () => {
                             </div>
                           </div>
 
+                          {/* Price Display */}
+                          <PriceDisplay product={product} isList={true} />
+
                           {/* Details */}
                           <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm">
                             <div className="flex items-center gap-1 md:gap-2">
@@ -1032,14 +1115,8 @@ const ProductPage = () => {
                           </div>
                         </div>
 
-                        {/* Price & Actions */}
+                        {/* Actions */}
                         <div className="mt-3 md:mt-0 md:ml-4 lg:ml-6 flex flex-col">
-                          <div
-                            className="text-xl md:text-2xl lg:text-3xl font-bold mb-3 md:mb-4"
-                            style={{ color: colors.primary }}
-                          >
-                            ₹ {product.price.toLocaleString("en-IN")}
-                          </div>
                           <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
                             <CartButton product={product} />
                             <button

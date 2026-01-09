@@ -16,6 +16,7 @@ import {
   Minus,
   ShoppingCart,
   Loader2,
+  Percent,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { addToCart, updateQuantity, getCartCount } from "../../utils/cart";
@@ -161,6 +162,62 @@ const generateDynamicTheme = (categoryKey) => {
   };
 };
 
+// Calculate discount percentage
+const calculateDiscountPercentage = (originalPrice, sellingPrice) => {
+  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice) return 0;
+  const discount = ((originalPrice - sellingPrice) / originalPrice) * 100;
+  return Math.round(discount * 10) / 10; // Round to 1 decimal place
+};
+
+// Format currency in Indian Rupees
+const formatCurrency = (amount) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+// Price display component
+const PriceDisplay = ({ product, compact = false }) => {
+  const hasDiscount = product.discountPercentage > 0;
+
+  return (
+    <div className={`flex flex-col ${compact ? 'mb-2' : 'mb-3'}`}>
+      {/* Selling Price - Large and prominent */}
+      <div className="flex items-center gap-2">
+        <span className={`font-bold ${compact ? 'text-xl' : 'text-2xl'} text-white`}>
+          ₹{product.sellingPrice.toLocaleString("en-IN")}
+        </span>
+        
+        {/* Discount Badge */}
+        {hasDiscount && (
+          <div className={`flex items-center ${compact ? 'px-2 py-0.5' : 'px-2 py-1'} rounded-full font-bold`}
+            style={{ backgroundColor: '#FF6161', color: 'white' }}>
+            <Percent className={`${compact ? 'w-2 h-2' : 'w-3 h-3'} mr-1`} />
+            <span className={`${compact ? 'text-xs' : 'text-sm'}`}>
+              {product.discountPercentage}% off
+            </span>
+          </div>
+        )}
+      </div>
+      
+      {/* Original Price with strikethrough */}
+      {hasDiscount && (
+        <div className="flex items-center gap-2 mt-1">
+          <span className={`text-gray-400 ${compact ? 'text-sm' : 'text-base'} line-through`}>
+            ₹{product.originalPrice.toLocaleString("en-IN")}
+          </span>
+          <span className="text-xs text-gray-500">
+            ({formatCurrency(product.originalPrice - product.sellingPrice)} saved)
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const ProductSection = ({ productData = [] }) => {
   const [activeTab, setActiveTab] = useState(null);
   const [tabs, setTabs] = useState([]);
@@ -246,6 +303,12 @@ const ProductSection = ({ productData = [] }) => {
         else productIcon = getCategoryIcon(category.name);
       }
 
+      // Parse prices
+      const originalPrice = parseFloat(product.price) || 0;
+      const sellingPrice = parseFloat(product.sell_price) || originalPrice;
+      const discountPercentage = parseFloat(product.discount_percentage) || 
+                                calculateDiscountPercentage(originalPrice, sellingPrice);
+
       groupedProducts[categorySlug].push({
         id: product.id,
         title: product.title,
@@ -253,7 +316,9 @@ const ProductSection = ({ productData = [] }) => {
           imageUrl ||
           `https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop`,
         icon: productIcon,
-        price: parseFloat(product.price) || 0,
+        originalPrice: originalPrice,
+        sellingPrice: sellingPrice,
+        discountPercentage: discountPercentage,
         category: category.name,
         slug: product.slug,
         short_description: product.short_description,
@@ -479,17 +544,36 @@ const ProductSection = ({ productData = [] }) => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
 
+                    {/* Discount Badge on Image */}
+                    {product.discountPercentage > 0 && (
+                      <div className="absolute top-3 right-3">
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
+                          <Percent className="w-2 h-2 mr-0.5" />
+                          {product.discountPercentage}% OFF
+                        </div>
+                      </div>
+                    )}
+
                     {/* Icon */}
                     <div
-                      className={`absolute top-4 right-4 p-3 rounded-xl ${theme.light}`}
+                      className={`absolute top-3 left-3 p-2 rounded-lg ${theme.light}`}
                     >
-                      <Icon className={`w-5 h-5 ${theme.text}`} />
+                      <Icon className={`w-4 h-4 ${theme.text}`} />
                     </div>
+
+                    {/* Cart Quantity Badge */}
+                    {quantity > 0 && (
+                      <div className="absolute bottom-3 left-3">
+                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
+                          {quantity} in cart
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Content */}
                   <div className="p-5">
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                    <h3 className="text-lg font-semibold text-white mb-3 line-clamp-2">
                       {product.title}
                     </h3>
 
@@ -500,20 +584,18 @@ const ProductSection = ({ productData = [] }) => {
                       </p>
                     )}
 
-                    {/* Price */}
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-lg font-bold text-white">
-                        ₹{product.price.toLocaleString('en-IN')}
-                      </span>
-                      {product.rating > 0 && (
-                        <div className="flex items-center gap-1">
-                          <span className="text-yellow-400">★</span>
-                          <span className="text-gray-300 text-sm">
-                            {product.rating}
-                          </span>
-                        </div>
-                      )}
-                    </div>
+                    {/* Price Display */}
+                    <PriceDisplay product={product} compact={true} />
+
+                    {/* Rating */}
+                    {product.rating > 0 && (
+                      <div className="flex items-center gap-1 mb-4">
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-gray-300 text-sm">
+                          {product.rating}
+                        </span>
+                      </div>
+                    )}
 
                     {/* Cart Controls */}
                     <div className="mt-4">
@@ -547,22 +629,22 @@ const ProductSection = ({ productData = [] }) => {
                           <button
                             onClick={() => decrementQuantity(product)}
                             disabled={isLoading}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors
+                            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
                               ${isLoading 
                                 ? 'bg-gray-700 cursor-not-allowed' 
                                 : 'bg-red-500/20 hover:bg-red-500/30'
                               }`}
                           >
                             {isLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+                              <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
                             ) : (
-                              <Minus className="w-4 h-4 text-red-400" />
+                              <Minus className="w-3 h-3 text-red-400" />
                             )}
                           </button>
 
                           {/* Quantity Display */}
                           <div className="flex flex-col items-center">
-                            <span className="text-lg font-bold text-white">
+                            <span className="text-sm font-bold text-white">
                               {quantity}
                             </span>
                             <span className="text-xs text-gray-400">
@@ -574,16 +656,16 @@ const ProductSection = ({ productData = [] }) => {
                           <button
                             onClick={() => incrementQuantity(product)}
                             disabled={isLoading}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors
+                            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
                               ${isLoading 
                                 ? 'bg-gray-700 cursor-not-allowed' 
                                 : 'bg-green-500/20 hover:bg-green-500/30'
                               }`}
                           >
                             {isLoading ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-gray-300" />
+                              <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
                             ) : (
-                              <Plus className="w-4 h-4 text-green-400" />
+                              <Plus className="w-3 h-3 text-green-400" />
                             )}
                           </button>
                         </div>

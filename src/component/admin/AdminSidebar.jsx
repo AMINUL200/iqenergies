@@ -189,30 +189,18 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       path: "/admin/site-settings",
     },
     {
-      id: "users",
-      label: "Users Management",
-      icon: <Users className="w-5 h-5" />,
-      children: [
-        {
-          id: "all-users",
-          label: "All Users",
-          icon: <Users className="w-4 h-4" />,
-          path: "/admin/users/all",
-        },
-        {
-          id: "user-roles",
-          label: "User Roles",
-          icon: <UserCog className="w-4 h-4" />,
-          path: "/admin/users/roles",
-        },
-        {
-          id: "permissions",
-          label: "Permissions",
-          icon: <Shield className="w-4 h-4" />,
-          path: "/admin/users/permissions",
-        },
-      ],
+      id: "brochure&certification",
+      label: "Brochure&Certification Management",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/brochure_certification",
     },
+    {
+      id: "gstmaster",
+      label: "GST Master Manage",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/gst-master",
+    },
+    
   ];
 
   const toggleDropdown = (id) => {

@@ -45,6 +45,8 @@ import SiteSettings from "./pages/admin/setting/SiteSettings";
 import HandleServicesFeature from "./pages/admin/service/HandleServicesFeature";
 import HandleProductCategory from "./pages/admin/product/HandleProductCategory";
 import HandleProduct from "./pages/admin/product/HandleProduct";
+import HandleBrochureCertification from "./pages/admin/about/HandleBrochureCertification";
+import HandleGSTMaster from "./pages/admin/payment/HandleGSTMaster";
 
 const App = () => {
   return (
@@ -152,6 +154,14 @@ const App = () => {
             <Route
               path="handle-product/product"
               element={<HandleProduct />}
+            />
+            <Route
+              path="brochure_certification"
+              element={<HandleBrochureCertification />}
+            />
+            <Route
+              path="gst-master"
+              element={<HandleGSTMaster />}
             />
           </Route>
         </Route>
