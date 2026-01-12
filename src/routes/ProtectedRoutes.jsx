@@ -1,22 +1,34 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
-/* ---------- Login / Register ---------- */
+/* ---------- LOGIN / REGISTER (GUEST ONLY) ---------- */
 export const GuestRoute = () => {
   const { isAuthenticated, user } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthenticated) return <Outlet />;
+  /**
+   * 🔑 IMPORTANT:
+   * If user came here because of redirect (state.from),
+   * allow login page even if authenticated
+   */
+  if (isAuthenticated && location.state?.from) {
+    return <Outlet />;
+  }
 
-  // logged-in users cannot see login/register
-  return user?.role === "admin" ? (
-    <Navigate to="/admin" replace />
-  ) : (
-    <Navigate to="/" replace />
-  );
+  // Normal behavior: logged-in users can't see login/register
+  if (isAuthenticated) {
+    return user?.role === "admin" ? (
+      <Navigate to="/admin" replace />
+    ) : (
+      <Navigate to="/" replace />
+    );
+  }
+
+  return <Outlet />;
 };
 
 /* ---------- PUBLIC USER ROUTES ---------- */
-/* Anyone can access (logged-in or not), but admin is blocked */
+/* Accessible to everyone EXCEPT admin */
 export const PublicUserRoute = () => {
   const { user, isAuthenticated } = useAuth();
 
@@ -27,12 +39,21 @@ export const PublicUserRoute = () => {
   return <Outlet />;
 };
 
-/* ---------- PRIVATE USER ROUTES ---------- */
+/* ---------- PRIVATE USER ROUTES (LOGGED-IN USERS) ---------- */
 export const PrivateUserRoute = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, loading } = useAuth();
+  const location = useLocation();
+
+  if (loading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location.pathname }}
+        replace
+      />
+    );
   }
 
   if (user?.role !== "user") {
@@ -47,10 +68,16 @@ export const AdminRoute = () => {
   const { isAuthenticated, user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) return null; // ⛔ wait
+  if (loading) return null;
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return (
+      <Navigate
+        to="/login"
+        state={{ from: location.pathname }}
+        replace
+      />
+    );
   }
 
   if (user?.role !== "admin") {

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
 import { toast } from "react-toastify";
@@ -15,6 +15,12 @@ const LoginPage = () => {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // where to go after login
+  const redirectTo = location.state?.from || "/";
+
+  console.log(redirectTo);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -46,24 +52,26 @@ const LoginPage = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (validateForm()) {
-      setIsLoading(true);
+    if (!validateForm()) return;
 
-      try {
-        const response = await api.post("/login", formData);
-        const { token, user } = response.data;
-        login(user, token);
-        toast.success("Login successful!");
-        console.log("Logged in user:", user);
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else {
-          navigate("/");
-        }
-      } catch (error) {
-        console.error("Login error:", error);
-        toast.error(error.message || "Login failed. Please try again.");
+    setIsLoading(true);
+
+    try {
+      const response = await api.post("/login", formData);
+      const { token, user } = response.data;
+
+      login(user, token);
+      toast.success("Login successful!");
+
+      if (user.role === "admin") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate(redirectTo, { replace: true });
       }
+    } catch (error) {
+      toast.error(error.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false); // ✅ REQUIRED
     }
   };
 

@@ -10,10 +10,17 @@ export const api = axios.create({
 // Interceptor: Attach Token + Detect FormData + Default Headers
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
-  console.log(token);
+  const cartToken = localStorage.getItem("cart_token");
 
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  // Cart token (custom header – backend dependent)
+  if (cartToken) {
+    config.headers["X-Cart-Token"] = cartToken;
+    // OR if backend expects:
+    // config.headers["cart-token"] = cartToken;
   }
 
   // 🔥 Auto prevent caching only for GET requests

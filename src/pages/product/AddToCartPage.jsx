@@ -1,41 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { Trash2, Plus, Minus, ArrowRight, ShoppingCart, Percent } from "lucide-react";
+import {
+  Trash2,
+  Plus,
+  Minus,
+  ArrowRight,
+  ShoppingCart,
+  Percent,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import PageLoader from "../../component/common/PageLoader";
+import { api } from "../../utils/app";
+import { useAuth } from "../../context/AuthContext";
+import { toast } from "react-toastify";
 
 const AddToCartPage = () => {
   const navigate = useNavigate();
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [handleLoading, setHandleLoading] = useState(false);
+  const { isAuthenticated, user } = useAuth();
 
   // Load cart items from localStorage on component mount
   useEffect(() => {
     loadCartItems();
     // Listen for cart updates from other components
-    window.addEventListener('cartUpdated', loadCartItems);
-    
+    window.addEventListener("cartUpdated", loadCartItems);
+
     return () => {
-      window.removeEventListener('cartUpdated', loadCartItems);
+      window.removeEventListener("cartUpdated", loadCartItems);
     };
   }, []);
 
   const loadCartItems = () => {
     try {
       const cart = JSON.parse(localStorage.getItem("cart")) || {};
-      const items = Object.values(cart).map(item => {
+      const items = Object.values(cart).map((item) => {
         const product = item.product;
         return {
           id: product.id,
           title: product.title,
           price: product.sellingPrice || parseFloat(product.price) || 0,
-          originalPrice: product.originalPrice || parseFloat(product.price) || 0,
+          originalPrice:
+            product.originalPrice || parseFloat(product.price) || 0,
           discountPercentage: product.discountPercentage || 0,
           quantity: item.quantity,
           image: product.image,
           product: product, // Store full product object
         };
       });
-      
+
       setCartItems(items);
     } catch (error) {
       console.error("Error loading cart:", error);
@@ -48,19 +61,19 @@ const AddToCartPage = () => {
   // Calculate price breakdowns
   const calculateCartSummary = () => {
     const subtotal = cartItems.reduce(
-      (acc, item) => acc + (item.price * item.quantity),
+      (acc, item) => acc + item.price * item.quantity,
       0
     );
-    
+
     const totalOriginalPrice = cartItems.reduce(
-      (acc, item) => acc + (item.originalPrice * item.quantity),
+      (acc, item) => acc + item.originalPrice * item.quantity,
       0
     );
-    
+
     const totalSaved = totalOriginalPrice - subtotal;
     const tax = subtotal * 0.18; // 18% GST
     const totalAmount = subtotal + tax;
-    
+
     return {
       subtotal,
       totalOriginalPrice,
@@ -68,7 +81,7 @@ const AddToCartPage = () => {
       tax,
       totalAmount,
       totalItems: cartItems.reduce((acc, item) => acc + item.quantity, 0),
-      totalProducts: cartItems.length
+      totalProducts: cartItems.length,
     };
   };
 
@@ -76,7 +89,7 @@ const AddToCartPage = () => {
   const handleQuantityChange = (productId, newQuantity) => {
     try {
       const cart = JSON.parse(localStorage.getItem("cart")) || {};
-      
+
       if (newQuantity <= 0) {
         // Remove item if quantity is 0 or less
         delete cart[productId];
@@ -84,13 +97,12 @@ const AddToCartPage = () => {
         // Update quantity
         cart[productId].quantity = newQuantity;
       }
-      
+
       localStorage.setItem("cart", JSON.stringify(cart));
       loadCartItems();
-      
+
       // Notify other components about cart update
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       console.error("Error updating quantity:", error);
     }
@@ -103,10 +115,9 @@ const AddToCartPage = () => {
       delete cart[productId];
       localStorage.setItem("cart", JSON.stringify(cart));
       loadCartItems();
-      
+
       // Notify other components about cart update
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     } catch (error) {
       console.error("Error removing item:", error);
     }
@@ -116,23 +127,74 @@ const AddToCartPage = () => {
   const handleClearCart = () => {
     if (window.confirm("Are you sure you want to clear your cart?")) {
       localStorage.removeItem("cart");
+      localStorage.removeItem("cart_token");
       setCartItems([]);
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     }
   };
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
   };
 
+  // Build backend cart payload
+  const buildCartPayload = () => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || {};
+
+    return Object.values(cart).map((item) => ({
+      product_id: item.product.id, // IMPORTANT
+      quantity: item.quantity,
+    }));
+  };
+
+  // Sync cart with backend and store cart_token
+  const syncCartWithBackend = async () => {
+    setHandleLoading(true);
+    try {
+      const items = buildCartPayload();
+
+      if (!items.length) return;
+
+      const res = await api.post("/cart-add", {
+        items,
+      });
+
+      if (res.data?.success) {
+        localStorage.setItem("cart_token", res.data.cart_token);
+        console.log("Cart token saved:", res.data.cart_token);
+      }
+    } catch (err) {
+      console.error("Cart sync failed:", err.message);
+    } finally {
+      setHandleLoading(false);
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!isAuthenticated) {
+      alert("Please login to proceed to checkout", {
+        duration: 3000,
+      });
+
+      navigate("/login", {
+        state: { from: "/cart" },
+      });
+
+      return;
+    }
+
+    await syncCartWithBackend();
+    navigate("/checkout");
+  };
+
   if (loading) {
-    return <PageLoader/>
+    return <PageLoader />;
   }
 
   const cartSummary = calculateCartSummary();
@@ -193,7 +255,7 @@ const AddToCartPage = () => {
               ({cartSummary.totalItems} items)
             </span>
           </div>
-          
+
           <button
             onClick={handleClearCart}
             className="flex items-center gap-2 px-4 py-2 rounded-lg text-red-400 
@@ -212,7 +274,7 @@ const AddToCartPage = () => {
               const itemTotal = item.price * item.quantity;
               const itemOriginalTotal = item.originalPrice * item.quantity;
               const itemSaved = itemOriginalTotal - itemTotal;
-              
+
               return (
                 <div
                   key={item.id}
@@ -226,10 +288,11 @@ const AddToCartPage = () => {
                       alt={item.title}
                       className="w-28 h-28 rounded-xl object-cover"
                       onError={(e) => {
-                        e.target.src = "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800";
+                        e.target.src =
+                          "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800";
                       }}
                     />
-                    
+
                     {/* Discount Badge */}
                     {item.discountPercentage > 0 && (
                       <div className="absolute -top-2 -right-2">
@@ -243,17 +306,15 @@ const AddToCartPage = () => {
 
                   {/* Info */}
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold mb-2">
-                      {item.title}
-                    </h3>
-                    
+                    <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
+
                     {/* Price Information */}
                     <div className="mb-4 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-green-400 font-bold text-lg">
                           ₹{item.price.toLocaleString("en-IN")}
                         </span>
-                        
+
                         {/* Original Price with strikethrough */}
                         {item.discountPercentage > 0 && (
                           <>
@@ -266,10 +327,11 @@ const AddToCartPage = () => {
                           </>
                         )}
                       </div>
-                      
+
                       {/* Per Unit */}
                       <div className="text-sm text-gray-400">
-                        Per unit • {item.quantity} × ₹{item.price.toLocaleString("en-IN")}
+                        Per unit • {item.quantity} × ₹
+                        {item.price.toLocaleString("en-IN")}
                       </div>
                     </div>
 
@@ -277,8 +339,10 @@ const AddToCartPage = () => {
                     <div className="flex items-center justify-between">
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => handleQuantityChange(item.id, item.quantity - 1)}
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity - 1)
+                          }
                           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                         >
                           <Minus className="w-4 h-4" />
@@ -286,8 +350,10 @@ const AddToCartPage = () => {
                         <span className="font-semibold min-w-[40px] text-center">
                           {item.quantity}
                         </span>
-                        <button 
-                          onClick={() => handleQuantityChange(item.id, item.quantity + 1)}
+                        <button
+                          onClick={() =>
+                            handleQuantityChange(item.id, item.quantity + 1)
+                          }
                           className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
                         >
                           <Plus className="w-4 h-4" />
@@ -299,14 +365,14 @@ const AddToCartPage = () => {
                         <div className="text-lg font-bold text-white">
                           ₹{itemTotal.toLocaleString("en-IN")}
                         </div>
-                        
+
                         {/* Savings for this item */}
                         {itemSaved > 0 && (
                           <div className="text-xs text-green-400">
                             Saved ₹{itemSaved.toLocaleString("en-IN")}
                           </div>
                         )}
-                        
+
                         {/* Original Total */}
                         {item.discountPercentage > 0 && (
                           <div className="text-xs text-gray-400 line-through">
@@ -316,7 +382,7 @@ const AddToCartPage = () => {
                       </div>
 
                       {/* Remove Button */}
-                      <button 
+                      <button
                         onClick={() => handleRemoveItem(item.id)}
                         className="flex items-center gap-2 px-3 py-2 rounded-lg text-red-400 
                                    hover:text-red-500 hover:bg-red-500/10 transition-colors"
@@ -332,11 +398,11 @@ const AddToCartPage = () => {
           </div>
 
           {/* ================= SUMMARY ================= */}
-          <div className="p-8 rounded-2xl bg-white/5 backdrop-blur-xl
-                          border border-white/10 h-fit sticky top-6">
-            <h2 className="text-2xl font-bold mb-6">
-              Order Summary
-            </h2>
+          <div
+            className="p-8 rounded-2xl bg-white/5 backdrop-blur-xl
+                          border border-white/10 h-fit sticky top-6"
+          >
+            <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
 
             {/* Price Breakdown */}
             <div className="space-y-4 text-gray-300 mb-6">
@@ -349,7 +415,7 @@ const AddToCartPage = () => {
                   </span>
                 </div>
               )}
-              
+
               {/* Subtotal */}
               <div className="flex justify-between">
                 <span>Subtotal ({cartSummary.totalItems} items)</span>
@@ -357,7 +423,7 @@ const AddToCartPage = () => {
                   ₹{cartSummary.subtotal.toLocaleString("en-IN")}
                 </span>
               </div>
-              
+
               {/* Discount/Savings */}
               {cartSummary.totalSaved > 0 && (
                 <div className="flex justify-between text-green-400">
@@ -370,19 +436,19 @@ const AddToCartPage = () => {
                   </span>
                 </div>
               )}
-              
+
               {/* Delivery */}
               <div className="flex justify-between">
                 <span>Delivery Charges</span>
                 <span className="text-green-400 font-medium">FREE</span>
               </div>
-              
+
               {/* Tax */}
               <div className="flex justify-between">
                 <span>Tax (18% GST)</span>
                 <span>₹{cartSummary.tax.toLocaleString("en-IN")}</span>
               </div>
-              
+
               {/* Divider */}
               <div className="border-t border-white/10 pt-4">
                 {/* Total Amount */}
@@ -392,7 +458,7 @@ const AddToCartPage = () => {
                     ₹{cartSummary.totalAmount.toLocaleString("en-IN")}
                   </span>
                 </div>
-                
+
                 {/* Total Savings */}
                 {cartSummary.totalSaved > 0 && (
                   <div className="mt-2 text-sm text-green-400 text-right">
@@ -404,15 +470,45 @@ const AddToCartPage = () => {
 
             {/* Checkout Button */}
             <button
-              onClick={() => navigate("/checkout")}
-              className="mt-8 w-full flex items-center justify-center gap-3
-                         px-6 py-4 rounded-xl font-semibold
-                         bg-gradient-to-r from-green-500 to-green-600
-                         hover:from-green-600 hover:to-green-700
-                         transition-all shadow-lg hover:shadow-xl hover:shadow-green-500/30"
+              onClick={handleCheckout}
+              disabled={handleLoading}
+              className={`mt-8 w-full flex items-center justify-center gap-3
+    px-6 py-4 rounded-xl font-semibold transition-all
+    ${
+      handleLoading
+        ? "bg-green-600/60 cursor-not-allowed"
+        : "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl hover:shadow-green-500/30"
+    }`}
             >
-              Proceed to Checkout
-              <ArrowRight className="w-5 h-5" />
+              {handleLoading ? (
+                <>
+                  <svg
+                    className="animate-spin h-5 w-5 text-white"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                    />
+                  </svg>
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Proceed to Checkout
+                  <ArrowRight className="w-5 h-5" />
+                </>
+              )}
             </button>
 
             {/* Continue Shopping */}
@@ -432,11 +528,15 @@ const AddToCartPage = () => {
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div className="bg-white/5 p-3 rounded-lg">
                   <div className="text-gray-400">Total Products</div>
-                  <div className="text-white font-bold">{cartSummary.totalProducts}</div>
+                  <div className="text-white font-bold">
+                    {cartSummary.totalProducts}
+                  </div>
                 </div>
                 <div className="bg-white/5 p-3 rounded-lg">
                   <div className="text-gray-400">Total Items</div>
-                  <div className="text-white font-bold">{cartSummary.totalItems}</div>
+                  <div className="text-white font-bold">
+                    {cartSummary.totalItems}
+                  </div>
                 </div>
                 <div className="bg-white/5 p-3 rounded-lg">
                   <div className="text-gray-400">Savings</div>
@@ -452,8 +552,6 @@ const AddToCartPage = () => {
             </div>
           </div>
         </div>
-
-       
       </div>
     </div>
   );
