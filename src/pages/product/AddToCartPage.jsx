@@ -161,14 +161,14 @@ const AddToCartPage = () => {
 
       if (!items.length) return;
 
-      const res = await api.post("/cart-add", {
+      const res = await api.post("/buy-now", {
         items,
       });
 
-      if (res.data?.success) {
-        localStorage.setItem("cart_token", res.data.cart_token);
-        console.log("Cart token saved:", res.data.cart_token);
-      }
+      // if (res.data?.success) {
+      //   localStorage.setItem("cart_token", res.data.cart_token);
+      //   console.log("Cart token saved:", res.data.cart_token);
+      // }
     } catch (err) {
       console.error("Cart sync failed:", err.message);
     } finally {

@@ -47,6 +47,7 @@ import HandleProductCategory from "./pages/admin/product/HandleProductCategory";
 import HandleProduct from "./pages/admin/product/HandleProduct";
 import HandleBrochureCertification from "./pages/admin/about/HandleBrochureCertification";
 import HandleGSTMaster from "./pages/admin/payment/HandleGSTMaster";
+import CustomerSupport from "./pages/suport/CustomerSupport";
 
 const App = () => {
   return (
@@ -82,6 +83,7 @@ const App = () => {
             <Route path="/orders/:slug" element={<OrderTrackingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
+            <Route path="/customer-support" element={<CustomerSupport />} />
           </Route>
         </Route>
 

@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { 
-  CheckCircle, 
-  Shield, 
-  Zap, 
-  ArrowRight, 
-  Star, 
-  Loader2, 
-  ChevronLeft, 
-  ChevronRight, 
-  Plus, 
-  Minus, 
+import {
+  CheckCircle,
+  Shield,
+  Zap,
+  ArrowRight,
+  Star,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  Plus,
+  Minus,
   ShoppingCart,
   Percent,
   Tag,
@@ -17,12 +17,13 @@ import {
   Truck,
   Clock,
   CreditCard,
-  ShieldCheck
+  ShieldCheck,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../../utils/app";
 import { addToCart } from "../../utils/cart";
 import PageLoader from "../../component/common/PageLoader";
+import { useAuth } from "../../context/AuthContext";
 
 const reviews = [
   {
@@ -45,25 +46,28 @@ const reviews = [
 
 // Calculate discount percentage
 const calculateDiscountPercentage = (originalPrice, sellingPrice) => {
-  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice) return 0;
+  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice)
+    return 0;
   const discount = ((originalPrice - sellingPrice) / originalPrice) * 100;
   return Math.round(discount * 10) / 10; // Round to 1 decimal place
 };
 
 // Format currency in Indian Rupees
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 };
 
 const ProductDetails = () => {
+  const { isAuthenticated } = useAuth();
+
   const navigate = useNavigate();
   const { slug } = useParams();
-  
+
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -79,16 +83,18 @@ const ProductDetails = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch product by slug
       const response = await api.get(`/product-details/${slug}`);
-      
+
       if (response.data.success) {
         setProduct(response.data.data);
-        
+
         // Find primary image index
         if (response.data.data.images && response.data.data.images.length > 0) {
-          const primaryIndex = response.data.data.images.findIndex(img => img.is_primary);
+          const primaryIndex = response.data.data.images.findIndex(
+            (img) => img.is_primary
+          );
           setActiveImage(primaryIndex >= 0 ? primaryIndex : 0);
         }
       } else {
@@ -107,65 +113,110 @@ const ProductDetails = () => {
 
     try {
       setAddingToCart(true);
-      
+
       // Add product to cart with selected quantity
-      addToCart({
-        id: product.id,
-        title: product.title,
-        price: parseFloat(product.price),
-        sellingPrice: parseFloat(product.sell_price),
-        discountPercentage: parseFloat(product.discount_percentage),
-        image: product.images?.[0]?.web_image_url,
-        slug: product.slug,
-        category: product.category?.name,
-        short_description: product.short_description,
-      }, quantity);
-      
+      addToCart(
+        {
+          id: product.id,
+          title: product.title,
+          price: parseFloat(product.price),
+          sellingPrice: parseFloat(product.sell_price),
+          discountPercentage: parseFloat(product.discount_percentage),
+          image: product.images?.[0]?.web_image_url,
+          slug: product.slug,
+          category: product.category?.name,
+          short_description: product.short_description,
+        },
+        quantity
+      );
+
       // Dispatch cart update event
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
-      
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
+
       // Optional: Show success message or navigate to cart
       console.log(`Added ${quantity} ${product.title} to cart`);
-      
+
       // You can add a toast notification here
       alert(`Added ${quantity} ${product.title} to cart!`);
-      
     } catch (error) {
-      console.error('Error adding to cart:', error);
-      alert('Failed to add to cart. Please try again.');
+      console.error("Error adding to cart:", error);
+      alert("Failed to add to cart. Please try again.");
     } finally {
       setAddingToCart(false);
     }
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) return;
-    
-    // First add to cart
-    handleAddToCart();
-    // Then navigate to checkout
-    navigate('/checkout');
+
+    // 🔐 NOT LOGGED IN → redirect to login
+    if (!isAuthenticated) {
+      alert("Please login to continue");
+
+      navigate("/login", {
+        state: { from: `/product/${slug}` },
+      });
+
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+
+      await buyNowApi(); // 🔥 API call
+      navigate("/checkout");
+    } catch (error) {
+      console.error("Buy now failed:", error);
+      toast.error("Failed to proceed. Please try again.");
+    } finally {
+      setAddingToCart(false);
+    }
+  };
+
+  const buyNowApi = async () => {
+    const payload = {
+      items: [
+        {
+          product_id: product.id,
+          quantity: quantity,
+        },
+      ],
+    };
+
+    const res = await api.post("/buy-now", payload);
+
+    if (res.data?.success) {
+      console.log(res.data);
+      
+      localStorage.setItem("cart_token", res.data.cart_token);
+    } else {
+      throw new Error("Failed to add product to cart");
+    }
   };
 
   const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
+    setQuantity((prev) => prev + 1);
   };
 
   const decrementQuantity = () => {
     if (quantity > 1) {
-      setQuantity(prev => prev - 1);
+      setQuantity((prev) => prev - 1);
     }
   };
 
   const renderStars = (rating) => {
     const stars = [];
     const numericRating = parseFloat(rating);
-    
+
     for (let i = 1; i <= 5; i++) {
       stars.push(
         <Star
           key={i}
-          className={`w-4 h-4 ${i <= Math.round(numericRating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+          className={`w-4 h-4 ${
+            i <= Math.round(numericRating)
+              ? "text-yellow-400 fill-yellow-400"
+              : "text-gray-300"
+          }`}
         />
       );
     }
@@ -185,7 +236,9 @@ const ProductDetails = () => {
 
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
-      setActiveImage((prev) => (prev - 1 + product.images.length) % product.images.length);
+      setActiveImage(
+        (prev) => (prev - 1 + product.images.length) % product.images.length
+      );
     }
   };
 
@@ -196,7 +249,7 @@ const ProductDetails = () => {
   };
 
   if (loading) {
-    return<PageLoader/>
+    return <PageLoader />;
   }
 
   if (error || !product) {
@@ -204,8 +257,12 @@ const ProductDetails = () => {
       <section className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl text-gray-900 mb-4">😔</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Product Not Found</h2>
-          <p className="text-gray-600 mb-6">{error || "The product you're looking for doesn't exist."}</p>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            Product Not Found
+          </h2>
+          <p className="text-gray-600 mb-6">
+            {error || "The product you're looking for doesn't exist."}
+          </p>
           <button
             onClick={() => navigate("/products")}
             className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-white hover:text-gray-900 border border-gray-900 transition-colors font-medium"
@@ -218,13 +275,14 @@ const ProductDetails = () => {
   }
 
   const activeImageData = getActiveImage();
-  
+
   // Parse prices
   const originalPrice = parseFloat(product.price) || 0;
   const sellingPrice = parseFloat(product.sell_price) || originalPrice;
-  const discountPercentage = parseFloat(product.discount_percentage) || 
-                            calculateDiscountPercentage(originalPrice, sellingPrice);
-  
+  const discountPercentage =
+    parseFloat(product.discount_percentage) ||
+    calculateDiscountPercentage(originalPrice, sellingPrice);
+
   // Calculate total price
   const totalOriginalPrice = originalPrice * quantity;
   const totalSellingPrice = sellingPrice * quantity;
@@ -246,7 +304,7 @@ const ProductDetails = () => {
                     alt={activeImageData.alt_text || product.title}
                     className="w-full h-[400px] object-cover"
                   />
-                  
+
                   {/* Discount Badge */}
                   {discountPercentage > 0 && (
                     <div className="absolute top-4 left-4">
@@ -256,7 +314,7 @@ const ProductDetails = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   {/* Navigation Arrows */}
                   {product.images && product.images.length > 1 && (
                     <>
@@ -297,9 +355,9 @@ const ProductDetails = () => {
                     key={image.id}
                     onClick={() => setActiveImage(index)}
                     className={`flex-shrink-0 w-20 h-20 rounded-lg border-2 overflow-hidden transition-all ${
-                      activeImage === index 
-                        ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-2' 
-                        : 'border-gray-200 hover:border-gray-400'
+                      activeImage === index
+                        ? "border-gray-900 ring-2 ring-gray-900 ring-offset-2"
+                        : "border-gray-200 hover:border-gray-400"
                     }`}
                   >
                     <img
@@ -322,7 +380,9 @@ const ProductDetails = () => {
                 {product.category?.name || "Product"}
               </span>
               {product.sub_category && (
-                <span className="text-xs text-gray-500">• {product.sub_category.name}</span>
+                <span className="text-xs text-gray-500">
+                  • {product.sub_category.name}
+                </span>
               )}
             </div>
 
@@ -333,9 +393,7 @@ const ProductDetails = () => {
 
             {/* Rating */}
             <div className="flex items-center gap-2">
-              <div className="flex gap-1">
-                {renderStars(product.rating)}
-              </div>
+              <div className="flex gap-1">{renderStars(product.rating)}</div>
               <span className="text-gray-600">({product.rating})</span>
             </div>
 
@@ -351,19 +409,19 @@ const ProductDetails = () => {
                 <span className="text-3xl font-bold text-gray-900">
                   ₹{sellingPrice.toLocaleString("en-IN")}
                 </span>
-                
+
                 {/* Discount Badge */}
                 {discountPercentage > 0 && (
-                  <div className="flex items-center px-2 py-1 rounded-full font-bold"
-                    style={{ backgroundColor: '#FF6161', color: 'white' }}>
+                  <div
+                    className="flex items-center px-2 py-1 rounded-full font-bold"
+                    style={{ backgroundColor: "#FF6161", color: "white" }}
+                  >
                     <Percent className="w-3 h-3 mr-1" />
-                    <span className="text-sm">
-                      {discountPercentage}% off
-                    </span>
+                    <span className="text-sm">{discountPercentage}% off</span>
                   </div>
                 )}
               </div>
-              
+
               {/* Original Price with strikethrough */}
               {discountPercentage > 0 && (
                 <div className="flex items-center gap-2">
@@ -371,14 +429,15 @@ const ProductDetails = () => {
                     ₹{originalPrice.toLocaleString("en-IN")}
                   </span>
                   <span className="text-sm text-gray-600">
-                    ({formatCurrency(originalPrice - sellingPrice)} saved per unit)
+                    ({formatCurrency(originalPrice - sellingPrice)} saved per
+                    unit)
                   </span>
                 </div>
               )}
-              
+
               {/* Per Unit Text */}
               <span className="text-sm text-gray-500">(Per Unit)</span>
-              
+
               {/* Pre-order Badge */}
               {product.is_preorder && (
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
@@ -392,29 +451,41 @@ const ProductDetails = () => {
             <div className="grid grid-cols-2 gap-4">
               {/* HSN Code */}
               <div className="flex flex-col">
-                <span className="text-sm text-gray-500 font-medium">HSN Code</span>
-                <span className="text-gray-900 font-semibold">{product.hsn_code || "N/A"}</span>
+                <span className="text-sm text-gray-500 font-medium">
+                  HSN Code
+                </span>
+                <span className="text-gray-900 font-semibold">
+                  {product.hsn_code || "N/A"}
+                </span>
               </div>
-              
+
               {/* Model Number */}
               <div className="flex flex-col">
-                <span className="text-sm text-gray-500 font-medium">Model No.</span>
-                <span className="text-gray-900 font-semibold">{product.model_no || "N/A"}</span>
+                <span className="text-sm text-gray-500 font-medium">
+                  Model No.
+                </span>
+                <span className="text-gray-900 font-semibold">
+                  {product.model_no || "N/A"}
+                </span>
               </div>
-              
+
               {/* Delivery Time */}
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500 font-medium">
                   <Truck className="w-3 h-3 inline mr-1" />
                   Delivery
                 </span>
-                <span className="text-gray-900 font-semibold">{product.delivery_time}</span>
+                <span className="text-gray-900 font-semibold">
+                  {product.delivery_time}
+                </span>
               </div>
-              
+
               {/* Product Type */}
               <div className="flex flex-col">
                 <span className="text-sm text-gray-500 font-medium">Type</span>
-                <span className="text-gray-900 font-semibold">{product.product_type}</span>
+                <span className="text-gray-900 font-semibold">
+                  {product.product_type}
+                </span>
               </div>
             </div>
 
@@ -422,7 +493,7 @@ const ProductDetails = () => {
             <div className="border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-4">
                 <span className="font-medium text-gray-700">Quantity</span>
-                
+
                 {/* Quantity Controls */}
                 <div className="flex items-center bg-gray-100 rounded-lg">
                   <button
@@ -443,16 +514,18 @@ const ProductDetails = () => {
                   </button>
                 </div>
               </div>
-              
+
               {/* Total Price Breakdown */}
               <div className="space-y-2 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Price ({quantity} units)</span>
+                  <span className="text-gray-600">
+                    Price ({quantity} units)
+                  </span>
                   <span className="text-gray-900 font-medium">
                     ₹{totalSellingPrice.toLocaleString("en-IN")}
                   </span>
                 </div>
-                
+
                 {discountPercentage > 0 && (
                   <>
                     <div className="flex justify-between text-sm">
@@ -474,11 +547,13 @@ const ProductDetails = () => {
             {product.features && product.features.length > 0 && (
               <div className="grid sm:grid-cols-2 gap-4">
                 {product.features
-                  .filter(feature => feature.is_active)
+                  .filter((feature) => feature.is_active)
                   .map((feature, index) => (
                     <div key={feature.id} className="flex gap-3">
                       <CheckCircle className="w-5 h-5 text-green-600 mt-1" />
-                      <span className="text-gray-700">{feature.feature_text}</span>
+                      <span className="text-gray-700">
+                        {feature.feature_text}
+                      </span>
                     </div>
                   ))}
               </div>
@@ -488,18 +563,49 @@ const ProductDetails = () => {
             <div className="border border-gray-200 rounded-2xl p-6 space-y-6 bg-gray-50">
               <div className="flex flex-col sm:flex-row gap-3">
                 {/* Add to Cart Button */}
-                
 
                 {/* Buy Now Button */}
                 <button
                   onClick={handleBuyNow}
                   disabled={addingToCart}
-                  className="flex-1 group inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg 
-                    bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold 
-                    hover:shadow-xl hover:shadow-green-500/30 transition-all duration-300 disabled:opacity-50"
+                  className={`flex-1 group inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg 
+    font-semibold transition-all duration-300
+    ${
+      addingToCart
+        ? "bg-green-600/60 cursor-not-allowed"
+        : "bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl hover:shadow-green-500/30"
+    } text-white`}
                 >
-                  {product.is_preorder ? "Pre-order Now" : "Buy Now"}
-                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  {addingToCart ? (
+                    <>
+                      {/* Loader */}
+                      <svg
+                        className="animate-spin h-5 w-5 text-white"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                        />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      {product.is_preorder ? "Pre-order Now" : "Buy Now"}
+                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -532,7 +638,7 @@ const ProductDetails = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Product Description
             </h2>
-            <div 
+            <div
               className="text-gray-600 leading-relaxed prose max-w-none"
               dangerouslySetInnerHTML={createMarkup(product.description)}
             />
@@ -545,9 +651,11 @@ const ProductDetails = () => {
             <h2 className="text-2xl font-bold text-gray-900 mb-6">
               Product Information
             </h2>
-            <div 
+            <div
               className="text-gray-600 leading-relaxed prose max-w-none"
-              dangerouslySetInnerHTML={createMarkup(product.information.information)}
+              dangerouslySetInnerHTML={createMarkup(
+                product.information.information
+              )}
             />
           </div>
         )}

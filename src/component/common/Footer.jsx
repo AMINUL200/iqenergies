@@ -33,6 +33,15 @@ const Footer = () => {
               IQ Energies Providing Sustainable Solar, Hybrid, and EV Solutions
               for a Greener Future.
             </p>
+
+            {/* Customer Support Link - Simple addition */}
+            <p
+              onClick={() => navigate("/customer-support")}
+              className="cursor-pointer font-medium hover:underline mt-4"
+              style={{ color: "#0F766E" }}
+            >
+              Customer Support →
+            </p>
           </div>
 
           {/* ================= CENTER: BROCHURE QR ================= */}

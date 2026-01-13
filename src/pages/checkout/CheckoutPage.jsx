@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { ShieldCheck, ArrowRight, Zap, CreditCard, Wallet } from "lucide-react";
+import { 
+  ShieldCheck, 
+  ArrowRight, 
+  Zap, 
+  CreditCard, 
+  Wallet, 
+  ChevronDown,
+  Banknote,
+  Smartphone
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/app";
 import PageLoader from "../../component/common/PageLoader";
@@ -14,11 +23,38 @@ const CheckoutPage = () => {
     email: "",
     installation_address: "",
     pincode: "",
-    avg_monthly_electricity: "",
     state: "",
   });
   const [paymentMethod, setPaymentMethod] = useState("razorpay");
+  const [paymentMode, setPaymentMode] = useState("online"); // "online" or "cod"
+  const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [processing, setProcessing] = useState(false);
+
+  // Available payment methods (can be expanded later)
+  const paymentMethods = [
+    {
+      id: "razorpay",
+      name: "Razorpay",
+      description: "Pay with Credit/Debit Card, UPI, Net Banking",
+      icon: <CreditCard className="w-5 h-5 text-blue-600" />,
+      mode: "online"
+    },
+    // Future payment methods can be added here:
+    // {
+    //   id: "stripe",
+    //   name: "Stripe",
+    //   description: "International payment gateway",
+    //   icon: <Globe className="w-5 h-5 text-purple-600" />,
+    //   mode: "online"
+    // },
+    // {
+    //   id: "paypal",
+    //   name: "PayPal",
+    //   description: "Pay with PayPal account",
+    //   icon: <DollarSign className="w-5 h-5 text-blue-400" />,
+    //   mode: "online"
+    // }
+  ];
 
   useEffect(() => {
     fetchCheckoutData();
@@ -30,7 +66,6 @@ const CheckoutPage = () => {
       if (res.data?.success) {
         setCart(res.data.data);
         console.log(res.data.data);
-        
       }
     } catch (err) {
       console.error("Failed to load checkout data:", err.message);
@@ -52,6 +87,22 @@ const CheckoutPage = () => {
     return cart.items.reduce((total, item) => {
       return total + (item.product?.price || 0) * item.quantity;
     }, 0);
+  };
+
+  const handlePaymentModeChange = (mode) => {
+    setPaymentMode(mode);
+    if (mode === "cod") {
+      setPaymentMethod("cod");
+      setShowPaymentDropdown(false);
+    } else {
+      // Set to first available online payment method
+      setPaymentMethod(paymentMethods[0]?.id || "razorpay");
+    }
+  };
+
+  const handlePaymentMethodSelect = (methodId) => {
+    setPaymentMethod(methodId);
+    setShowPaymentDropdown(false);
   };
 
   const handlePlaceOrder = async () => {
@@ -98,9 +149,9 @@ const CheckoutPage = () => {
       if (response.data?.success) {
         const orderId = response.data.data?.order_id || response.data.data?.id;
         
-        // If payment method is razorpay, handle payment gateway
-        if (paymentMethod === "razorpay") {
-          await handleRazorpayPayment(orderId, response.data.data);
+        // If payment method is online (razorpay or other), handle payment gateway
+        if (paymentMode === "online") {
+          await handleOnlinePayment(orderId, response.data.data);
         } else {
           // For COD, navigate to success page
           navigate(`/order-success?order_id=${orderId}`);
@@ -114,6 +165,20 @@ const CheckoutPage = () => {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const handleOnlinePayment = async (orderId, orderData) => {
+    // Currently only Razorpay is implemented
+    // In the future, you can add logic for different payment methods here
+    if (paymentMethod === "razorpay") {
+      await handleRazorpayPayment(orderId, orderData);
+    }
+    // Add more payment methods here in the future:
+    // else if (paymentMethod === "stripe") {
+    //   await handleStripePayment(orderId, orderData);
+    // } else if (paymentMethod === "paypal") {
+    //   await handlePayPalPayment(orderId, orderData);
+    // }
   };
 
   const handleRazorpayPayment = async (orderId, orderData) => {
@@ -139,7 +204,7 @@ const CheckoutPage = () => {
         const paymentOrderId = paymentResponse.data.data?.order_id;
 
         const options = {
-          key: "YOUR_RAZORPAY_KEY_ID", // Should be from environment variables
+          key: process.env.REACT_APP_RAZORPAY_KEY_ID || "YOUR_RAZORPAY_KEY_ID",
           amount: calculateTotal() * 100,
           currency: "INR",
           name: "Solar Company",
@@ -194,6 +259,19 @@ const CheckoutPage = () => {
       setProcessing(false);
     }
   };
+
+  const getSelectedPaymentMethod = () => {
+    if (paymentMode === "cod") {
+      return {
+        name: "Cash on Delivery",
+        description: "Pay when product is installed",
+        icon: <Wallet className="w-5 h-5 text-orange-600" />
+      };
+    }
+    return paymentMethods.find(method => method.id === paymentMethod) || paymentMethods[0];
+  };
+
+  const selectedPayment = getSelectedPaymentMethod();
 
   if (loading) return <PageLoader />;
 
@@ -281,24 +359,15 @@ const CheckoutPage = () => {
                   />
 
                   <input
-                    type="number"
-                    name="avg_monthly_electricity"
-                    placeholder="Avg Monthly Electricity (kWh)"
-                    value={formData.avg_monthly_electricity}
+                    type="text"
+                    name="state"
+                    placeholder="State"
+                    value={formData.state}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-green-500 focus:outline-none"
+                    required
                   />
                 </div>
-
-                <input
-                  type="text"
-                  name="state"
-                  placeholder="State"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-green-500 focus:outline-none"
-                  required
-                />
               </div>
             </div>
 
@@ -308,66 +377,119 @@ const CheckoutPage = () => {
                 Payment Method
               </h2>
 
-              <div className="space-y-4">
-                <label
-                  className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                    paymentMethod === "razorpay"
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="razorpay"
-                    checked={paymentMethod === "razorpay"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+              <div className="space-y-6">
+                {/* Payment Mode Selection */}
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentModeChange("online")}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                      paymentMode === "online"
+                        ? "border-green-500 bg-green-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center mb-2">
                       <CreditCard className="w-5 h-5 text-blue-600" />
                     </div>
-                    <div>
-                      <span className="font-semibold text-gray-900">
-                        Online Payment
-                      </span>
-                      <p className="text-sm text-gray-600">
-                        Pay securely with Razorpay
-                      </p>
-                    </div>
-                  </div>
-                </label>
+                    <span className="font-semibold text-gray-900">Online</span>
+                    <span className="text-xs text-gray-600 mt-1">Pay Now</span>
+                  </button>
 
-                <label
-                  className={`flex items-center gap-4 p-4 border-2 rounded-xl cursor-pointer transition-all ${
-                    paymentMethod === "cod"
-                      ? "border-green-500 bg-green-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="paymentMethod"
-                    value="cod"
-                    checked={paymentMethod === "cod"}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="hidden"
-                  />
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center">
+                  <button
+                    type="button"
+                    onClick={() => handlePaymentModeChange("cod")}
+                    className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                      paymentMode === "cod"
+                        ? "border-green-500 bg-green-50"
+                        : "border-gray-200 hover:border-gray-300"
+                    }`}
+                  >
+                    <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center mb-2">
                       <Wallet className="w-5 h-5 text-orange-600" />
                     </div>
-                    <div>
-                      <span className="font-semibold text-gray-900">
-                        Cash on Delivery
-                      </span>
-                      <p className="text-sm text-gray-600">
-                        Pay when product is installed
-                      </p>
+                    <span className="font-semibold text-gray-900">COD</span>
+                    <span className="text-xs text-gray-600 mt-1">Pay on Delivery</span>
+                  </button>
+                </div>
+
+                {/* Online Payment Methods Dropdown (only shown when online is selected) */}
+                {paymentMode === "online" && (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setShowPaymentDropdown(!showPaymentDropdown)}
+                      className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                          {selectedPayment.icon}
+                        </div>
+                        <div className="text-left">
+                          <span className="font-semibold text-gray-900 block">
+                            {selectedPayment.name}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {selectedPayment.description}
+                          </span>
+                        </div>
+                      </div>
+                      <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${showPaymentDropdown ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {showPaymentDropdown && (
+                      <div className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-lg">
+                        {paymentMethods.map((method) => (
+                          <button
+                            key={method.id}
+                            type="button"
+                            onClick={() => handlePaymentMethodSelect(method.id)}
+                            className={`w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors ${
+                              paymentMethod === method.id ? 'bg-green-50' : ''
+                            }`}
+                          >
+                            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                              {method.icon}
+                            </div>
+                            <div className="text-left">
+                              <span className="font-semibold text-gray-900 block">
+                                {method.name}
+                              </span>
+                              <span className="text-sm text-gray-600">
+                                {method.description}
+                              </span>
+                            </div>
+                          </button>
+                        ))}
+                        
+                        {/* Future payment methods placeholder */}
+                        <div className="p-4 border-t border-gray-200">
+                          <p className="text-sm text-gray-500 text-center">
+                            More payment options coming soon...
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* COD Information */}
+                {paymentMode === "cod" && (
+                  <div className="p-4 rounded-xl bg-orange-50 border border-orange-200">
+                    <div className="flex items-start gap-3">
+                      <Wallet className="w-5 h-5 text-orange-600 mt-0.5" />
+                      <div>
+                        <h3 className="font-semibold text-gray-900 mb-1">
+                          Cash on Delivery
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Pay when the product is delivered and installed. Our team will collect payment during installation.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </label>
+                )}
               </div>
             </div>
           </div>
@@ -444,14 +566,23 @@ const CheckoutPage = () => {
                 "Processing..."
               ) : (
                 <>
-                  {paymentMethod === "razorpay" ? "Proceed to Payment" : "Place Order (COD)"}
+                  {paymentMode === "online" ? "Proceed to Payment" : "Place Order (COD)"}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
             </button>
 
+            {/* Payment Info */}
+            <div className="mt-4 text-center text-sm text-gray-600">
+              {paymentMode === "online" ? (
+                <p>You will be redirected to a secure payment page</p>
+              ) : (
+                <p>No payment required now. Pay during installation.</p>
+              )}
+            </div>
+
             {/* Trust */}
-            <div className="flex justify-center items-center gap-2 text-sm text-gray-500 mt-4">
+            <div className="flex justify-center items-center gap-2 text-sm text-gray-500 mt-4 pt-4 border-t border-gray-200">
               <ShieldCheck className="w-4 h-4 text-green-600" />
               100% Secure & Trusted Process
             </div>

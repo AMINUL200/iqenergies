@@ -17,11 +17,11 @@ api.interceptors.request.use((config) => {
   }
 
   // Cart token (custom header – backend dependent)
-  if (cartToken) {
-    config.headers["X-Cart-Token"] = cartToken;
-    // OR if backend expects:
-    // config.headers["cart-token"] = cartToken;
-  }
+  // if (cartToken) {
+  //   config.headers["X-Cart-Token"] = cartToken;
+  //   // OR if backend expects:
+  //   // config.headers["cart-token"] = cartToken;
+  // }
 
   // 🔥 Auto prevent caching only for GET requests
   if (config.method === "get") {
