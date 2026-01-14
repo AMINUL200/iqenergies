@@ -1,7 +1,6 @@
 import React, { useRef } from "react";
 import html2pdf from "html2pdf.js";
 import Invoice from "./Invoice";
-import "./invoice.css";
 
 const DownloadInvoice = ({ order }) => {
   const invoiceRef = useRef();
