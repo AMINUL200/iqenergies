@@ -189,6 +189,18 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       path: "/admin/site-settings",
     },
     {
+      id: "SEO-settings",
+      label: "SEO Settings",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/seo-settings",
+    },
+    {
+      id: "booking-survey",
+      label: "Booking Survey",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/booking-survey",
+    },
+    {
       id: "brochure&certification",
       label: "Brochure&Certification Management",
       icon: <Settings className="w-5 h-5" />,
@@ -199,6 +211,18 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       label: "GST Master Manage",
       icon: <Settings className="w-5 h-5" />,
       path: "/admin/gst-master",
+    },
+    {
+      id: "payment-gateway",
+      label: "Payment Gateway",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/payment-gateway",
+    },
+    {
+      id: "tech-support",
+      label: "Technical Support",
+      icon: <Settings className="w-5 h-5" />,
+      path: "/admin/technical-support-handle",
     },
     
   ];

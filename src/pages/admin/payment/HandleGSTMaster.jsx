@@ -361,7 +361,7 @@ const HandleGSTMaster = () => {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Description *
+                  Goods Name *
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

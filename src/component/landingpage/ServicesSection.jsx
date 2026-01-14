@@ -34,7 +34,7 @@ const ServicesSection = ({ servicesData = {} }) => {
   }));
 
   return (
-    <section className="relative py-10 md:py-20 md:pt-30 bg-[#0A1A2F]">
+    <section className="relative py-10 md:py-20 md:pt-30 bg-[#0A1A2F]" id="services">
       <div className="max-w-7xl mx-auto px-6">
         {/* ================= HEADER ================= */}
         <div className="max-w-4xl mb-16">

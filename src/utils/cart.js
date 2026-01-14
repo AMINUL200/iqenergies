@@ -78,3 +78,33 @@ export const getCartTotal = () => {
 export const clearCart = () => {
   localStorage.removeItem("cart");
 };
+
+export const fetchStateFromPincode = async (pincode) => {
+    if (pincode.length !== 6) return;
+
+    try {
+      setPincodeLoading(true);
+      setPincodeError("");
+
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`
+      );
+      const data = await res.json();
+
+      if (data[0]?.Status === "Success") {
+        const postOffice = data[0].PostOffice[0];
+
+        setFormData((prev) => ({
+          ...prev,
+          state: postOffice.State,
+        }));
+      } else {
+        setPincodeError("Invalid pincode");
+        setFormData((prev) => ({ ...prev, state: "" }));
+      }
+    } catch (error) {
+      setPincodeError("Failed to fetch state");
+    } finally {
+      setPincodeLoading(false);
+    }
+  };

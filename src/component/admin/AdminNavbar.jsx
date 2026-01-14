@@ -10,6 +10,7 @@ import {
   UserCircle,
   Mail,
   ChevronDown,
+  Headphones,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
@@ -20,7 +21,6 @@ const AdminNavbar = ({ setSidebarOpen }) => {
   const profileRef = useRef(null);
   const notificationRef = useRef(null);
   const navigate = useNavigate();
-
 
   const getInitials = (name) => {
     return name
@@ -90,6 +90,11 @@ const AdminNavbar = ({ setSidebarOpen }) => {
     navigate("/admin/settings");
   };
 
+  const handleCustomerSupportClick = () => {
+    // Navigate to customer support page
+    navigate("/admin/technical-supports");
+  };
+
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
       <div className="px-6 py-4">
@@ -116,6 +121,19 @@ const AdminNavbar = ({ setSidebarOpen }) => {
 
           {/* Right side */}
           <div className="flex items-center space-x-4">
+            {/* Customer Support Button */}
+            <button
+              onClick={handleCustomerSupportClick}
+              className="group relative p-2 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors border border-gray-200 hover:border-gray-900"
+              title="Customer Support"
+            >
+              <Headphones className="w-5 h-5" />
+              {/* Optional: Add indicator if there are new support tickets */}
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                {notifications.length}{" "}
+                {/* You can replace with actual support ticket count */}
+              </span>
+            </button>
             {/* Notifications */}
             <div className="relative" ref={notificationRef}>
               <button
@@ -226,9 +244,7 @@ const AdminNavbar = ({ setSidebarOpen }) => {
                         <p className="text-white font-semibold text-sm">
                           {user?.name}
                         </p>
-                        <p className="text-gray-300 text-xs">
-                          {user?.email}
-                        </p>
+                        <p className="text-gray-300 text-xs">{user?.email}</p>
                       </div>
                     </div>
                   </div>

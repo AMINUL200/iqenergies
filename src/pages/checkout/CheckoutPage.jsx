@@ -1,13 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { 
-  ShieldCheck, 
-  ArrowRight, 
-  Zap, 
-  CreditCard, 
-  Wallet, 
+import {
+  ShieldCheck,
+  ArrowRight,
+  Zap,
+  CreditCard,
+  Wallet,
   ChevronDown,
-  Banknote,
-  Smartphone
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../utils/app";
@@ -30,6 +28,9 @@ const CheckoutPage = () => {
   const [showPaymentDropdown, setShowPaymentDropdown] = useState(false);
   const [processing, setProcessing] = useState(false);
 
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState("");
+
   // Available payment methods (can be expanded later)
   const paymentMethods = [
     {
@@ -37,35 +38,49 @@ const CheckoutPage = () => {
       name: "Razorpay",
       description: "Pay with Credit/Debit Card, UPI, Net Banking",
       icon: <CreditCard className="w-5 h-5 text-blue-600" />,
-      mode: "online"
+      mode: "online",
     },
-    // Future payment methods can be added here:
-    // {
-    //   id: "stripe",
-    //   name: "Stripe",
-    //   description: "International payment gateway",
-    //   icon: <Globe className="w-5 h-5 text-purple-600" />,
-    //   mode: "online"
-    // },
-    // {
-    //   id: "paypal",
-    //   name: "PayPal",
-    //   description: "Pay with PayPal account",
-    //   icon: <DollarSign className="w-5 h-5 text-blue-400" />,
-    //   mode: "online"
-    // }
   ];
 
   useEffect(() => {
     fetchCheckoutData();
   }, []);
 
+  const fetchStateFromPincode = async (pincode) => {
+    if (pincode.length !== 6) return;
+
+    try {
+      setPincodeLoading(true);
+      setPincodeError("");
+
+      const res = await fetch(
+        `https://api.postalpincode.in/pincode/${pincode}`
+      );
+      const data = await res.json();
+
+      if (data[0]?.Status === "Success") {
+        const postOffice = data[0].PostOffice[0];
+
+        setFormData((prev) => ({
+          ...prev,
+          state: postOffice.State,
+        }));
+      } else {
+        setPincodeError("Invalid pincode");
+        setFormData((prev) => ({ ...prev, state: "" }));
+      }
+    } catch (error) {
+      setPincodeError("Failed to fetch state");
+    } finally {
+      setPincodeLoading(false);
+    }
+  };
+
   const fetchCheckoutData = async () => {
     try {
       const res = await api.get("/cart");
       if (res.data?.success) {
         setCart(res.data.data);
-        console.log(res.data.data);
       }
     } catch (err) {
       console.error("Failed to load checkout data:", err.message);
@@ -82,10 +97,24 @@ const CheckoutPage = () => {
     }));
   };
 
-  const calculateTotal = () => {
+  // Calculate subtotal from sell_price
+  const calculateSubtotal = () => {
     if (!cart?.items) return 0;
     return cart.items.reduce((total, item) => {
-      return total + (item.product?.price || 0) * item.quantity;
+      const sellPrice = parseFloat(item.product?.sell_price) || 0;
+      const quantity = item.quantity || 1;
+      return total + (sellPrice * quantity);
+    }, 0);
+  };
+
+  // Calculate total savings from discount
+  const calculateTotalSavings = () => {
+    if (!cart?.items) return 0;
+    return cart.items.reduce((savings, item) => {
+      const originalPrice = parseFloat(item.product?.price) || 0;
+      const sellPrice = parseFloat(item.product?.sell_price) || 0;
+      const quantity = item.quantity || 1;
+      return savings + ((originalPrice - sellPrice) * quantity);
     }, 0);
   };
 
@@ -117,7 +146,7 @@ const CheckoutPage = () => {
       "pincode",
       "state",
     ];
-    
+
     for (const field of requiredFields) {
       if (!formData[field]?.trim()) {
         alert(`Please fill in ${field.replace("_", " ")}`);
@@ -140,24 +169,26 @@ const CheckoutPage = () => {
           product_id: item.product_id || item.product?.id,
           quantity: item.quantity,
         })),
-        total_amount: calculateTotal(),
       };
 
-      // Place order API call
-      const response = await api.post("/orders", orderData);
+      // Step 1: Create Order
+      const orderResponse = await api.post("/checkout", orderData);
 
-      if (response.data?.success) {
-        const orderId = response.data.data?.order_id || response.data.data?.id;
+      if (orderResponse.data?.success) {
+        const order = orderResponse.data.order;
+        const orderId = order.id || order.order_id;
         
-        // If payment method is online (razorpay or other), handle payment gateway
+        console.log("Order created:", order);
+
+        // Step 2: If payment method is online, initiate payment
         if (paymentMode === "online") {
-          await handleOnlinePayment(orderId, response.data.data);
+          await handleOnlinePayment(orderId, order);
         } else {
           // For COD, navigate to success page
           navigate(`/order-success?order_id=${orderId}`);
         }
       } else {
-        throw new Error(response.data?.message || "Failed to place order");
+        throw new Error(orderResponse.data?.message || "Failed to place order");
       }
     } catch (error) {
       console.error("Order placement failed:", error);
@@ -168,94 +199,158 @@ const CheckoutPage = () => {
   };
 
   const handleOnlinePayment = async (orderId, orderData) => {
-    // Currently only Razorpay is implemented
-    // In the future, you can add logic for different payment methods here
     if (paymentMethod === "razorpay") {
-      await handleRazorpayPayment(orderId, orderData);
+      await initiateRazorpayPayment(orderId, orderData);
     }
-    // Add more payment methods here in the future:
-    // else if (paymentMethod === "stripe") {
-    //   await handleStripePayment(orderId, orderData);
-    // } else if (paymentMethod === "paypal") {
-    //   await handlePayPalPayment(orderId, orderData);
-    // }
   };
 
-  const handleRazorpayPayment = async (orderId, orderData) => {
+  const initiateRazorpayPayment = async (orderId, orderData) => {
     try {
-      // Load Razorpay script dynamically
+      // Step 2: Initiate payment with backend
+      const paymentResponse = await api.post("/payment-initiate", {
+        order_id: orderId,
+        gateway: "razorpay"
+      });
+
+      if (!paymentResponse.data?.success) {
+        throw new Error(paymentResponse.data?.message || "Payment initiation failed");
+      }
+
+      const paymentData = paymentResponse.data.data;
+      console.log("Payment initiated:", paymentData);
+
+      // Step 3: Load Razorpay script and open payment modal
+      await loadRazorpayScript(paymentData, orderId);
+      
+    } catch (error) {
+      console.error("Payment initiation failed:", error);
+      alert(error.message || "Failed to initiate payment. Please try again.");
+      setProcessing(false);
+    }
+  };
+
+  const loadRazorpayScript = (paymentData, orderId) => {
+    return new Promise((resolve, reject) => {
+      // Check if script is already loaded
+      if (window.Razorpay) {
+        openRazorpayModal(paymentData, orderId);
+        resolve();
+        return;
+      }
+
       const script = document.createElement("script");
       script.src = "https://checkout.razorpay.com/v1/checkout.js";
       script.async = true;
-      document.body.appendChild(script);
-
-      script.onload = async () => {
-        // Create payment order with backend
-        const paymentResponse = await api.post("/payment/create-order", {
-          amount: calculateTotal() * 100, // Convert to paise
-          currency: "INR",
-          receipt: `order_${orderId}`,
-        });
-
-        if (!paymentResponse.data?.success) {
-          throw new Error("Payment initialization failed");
-        }
-
-        const paymentOrderId = paymentResponse.data.data?.order_id;
-
-        const options = {
-          key: process.env.REACT_APP_RAZORPAY_KEY_ID || "YOUR_RAZORPAY_KEY_ID",
-          amount: calculateTotal() * 100,
-          currency: "INR",
-          name: "Solar Company",
-          description: "Solar Panel Purchase",
-          order_id: paymentOrderId,
-          handler: async function (response) {
-            try {
-              // Verify payment on backend
-              const verifyResponse = await api.post("/payment/verify", {
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                order_id: orderId,
-              });
-
-              if (verifyResponse.data?.success) {
-                navigate(`/order-success?order_id=${orderId}&payment_id=${response.razorpay_payment_id}`);
-              } else {
-                alert("Payment verification failed. Please contact support.");
-              }
-            } catch (error) {
-              console.error("Payment verification error:", error);
-              alert("Payment verification failed. Please contact support.");
-            }
-          },
-          prefill: {
-            name: formData.customer_name,
-            email: formData.email,
-            contact: formData.mobile,
-          },
-          theme: {
-            color: "#22c55e",
-          },
-          modal: {
-            ondismiss: function() {
-              setProcessing(false);
-            }
-          }
-        };
-
-        const rzp = new window.Razorpay(options);
-        rzp.open();
+      script.onload = () => {
+        openRazorpayModal(paymentData, orderId);
+        resolve();
       };
-
       script.onerror = () => {
-        alert("Failed to load payment gateway. Please try again.");
+        reject(new Error("Failed to load Razorpay script"));
         setProcessing(false);
+        alert("Failed to load payment gateway. Please try again.");
       };
+      document.body.appendChild(script);
+    });
+  };
+
+  const openRazorpayModal = (paymentData, orderId) => {
+    const options = {
+      key: paymentData.razorpay_key,
+      amount: paymentData.amount, // Amount in paise
+      currency: paymentData.currency || "INR",
+      name: "IQ Energies",
+      description: `Order #${paymentData.order_number}`,
+      order_id: paymentData.razorpay_order_id,
+      handler: async (response) => {
+        // Payment successful - verify payment
+        await verifyRazorpayPayment(response, orderId);
+      },
+      prefill: {
+        name: paymentData.customer?.name || formData.customer_name,
+        email: paymentData.customer?.email || formData.email,
+        contact: paymentData.customer?.mobile || formData.mobile,
+      },
+      theme: {
+        color: "#4CAF50", // Green color matching your theme
+      },
+      modal: {
+        ondismiss: () => {
+          console.log("Payment modal closed");
+          setProcessing(false);
+        },
+      },
+      config: {
+        display: {
+          blocks: {
+            banks: {
+              name: 'Pay via Bank',
+              instruments: [
+                {
+                  method: 'card',
+                  issuers: ['MASTERCARD', 'VISA']
+                },
+                {
+                  method: 'netbanking',
+                  banks: ['ICICI', 'HDFC', 'SBI', 'AXIS']
+                },
+              ]
+            },
+            upi: {
+              name: "Pay via UPI",
+              instruments: [
+                {
+                  method: 'upi'
+                }
+              ]
+            }
+          },
+          sequence: ['block.banks', 'block.upi'],
+          preferences: {
+            show_default_blocks: true,
+          }
+        }
+      }
+    };
+
+    try {
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
-      console.error("Razorpay setup error:", error);
-      alert("Payment setup failed. Please try again.");
+      console.error("Failed to open Razorpay modal:", error);
+      setProcessing(false);
+      alert("Failed to open payment gateway. Please try again.");
+    }
+  };
+
+  const verifyRazorpayPayment = async (response, orderId) => {
+    try {
+      setProcessing(true);
+      console.log(response);
+      
+      const verifyResponse = await api.post("/payment-verify", {
+        order_id: orderId,
+        gateway: "razorpay",
+        razorpay_order_id: response.razorpay_order_id,
+        razorpay_payment_id: response.razorpay_payment_id,
+        razorpay_signature: response.razorpay_signature,
+      });
+
+      if (verifyResponse.data?.success) {
+        // Payment successful
+        console.log("Payment verified successfully");
+        
+        // Navigate to success page with order and payment details
+        navigate(`/order-success?order_id=${orderId}&payment_id=${response.razorpay_payment_id}&order_number=${verifyResponse.data.data?.order_number || ''}`);
+      } else {
+        // Payment verification failed
+        console.error("Payment verification failed:", verifyResponse.data?.message);
+        alert("Payment verification failed. Please contact support.");
+        setProcessing(false);
+      }
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      alert("Payment verification failed. Please contact support.");
       setProcessing(false);
     }
   };
@@ -265,10 +360,13 @@ const CheckoutPage = () => {
       return {
         name: "Cash on Delivery",
         description: "Pay when product is installed",
-        icon: <Wallet className="w-5 h-5 text-orange-600" />
+        icon: <Wallet className="w-5 h-5 text-orange-600" />,
       };
     }
-    return paymentMethods.find(method => method.id === paymentMethod) || paymentMethods[0];
+    return (
+      paymentMethods.find((method) => method.id === paymentMethod) ||
+      paymentMethods[0]
+    );
   };
 
   const selectedPayment = getSelectedPaymentMethod();
@@ -348,15 +446,33 @@ const CheckoutPage = () => {
                 />
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="pincode"
-                    placeholder="Pincode"
-                    value={formData.pincode}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-green-500 focus:outline-none"
-                    required
-                  />
+                  <div>
+                    <input
+                      type="text"
+                      name="pincode"
+                      placeholder="Pincode"
+                      value={formData.pincode}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/\D/g, ""); // numbers only
+                        setFormData((prev) => ({ ...prev, pincode: value }));
+
+                        if (value.length === 6) {
+                          fetchStateFromPincode(value);
+                        }
+                      }}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-green-500 focus:outline-none"
+                      required
+                      maxLength={6}
+                    />
+                    {pincodeLoading && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Fetching state...
+                      </p>
+                    )}
+                    {pincodeError && (
+                      <p className="text-sm text-red-500 mt-1">{pincodeError}</p>
+                    )}
+                  </div>
 
                   <input
                     type="text"
@@ -365,7 +481,7 @@ const CheckoutPage = () => {
                     value={formData.state}
                     onChange={handleInputChange}
                     className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:border-green-500 focus:outline-none"
-                    required
+                    readOnly
                   />
                 </div>
               </div>
@@ -409,7 +525,9 @@ const CheckoutPage = () => {
                       <Wallet className="w-5 h-5 text-orange-600" />
                     </div>
                     <span className="font-semibold text-gray-900">COD</span>
-                    <span className="text-xs text-gray-600 mt-1">Pay on Delivery</span>
+                    <span className="text-xs text-gray-600 mt-1">
+                      Pay on Delivery
+                    </span>
                   </button>
                 </div>
 
@@ -418,7 +536,9 @@ const CheckoutPage = () => {
                   <div className="relative">
                     <button
                       type="button"
-                      onClick={() => setShowPaymentDropdown(!showPaymentDropdown)}
+                      onClick={() =>
+                        setShowPaymentDropdown(!showPaymentDropdown)
+                      }
                       className="w-full flex items-center justify-between p-4 rounded-xl border-2 border-gray-200 hover:border-gray-300 transition-all"
                     >
                       <div className="flex items-center gap-3">
@@ -434,7 +554,11 @@ const CheckoutPage = () => {
                           </span>
                         </div>
                       </div>
-                      <ChevronDown className={`w-5 h-5 text-gray-500 transition-transform ${showPaymentDropdown ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`w-5 h-5 text-gray-500 transition-transform ${
+                          showPaymentDropdown ? "rotate-180" : ""
+                        }`}
+                      />
                     </button>
 
                     {/* Dropdown Menu */}
@@ -446,7 +570,7 @@ const CheckoutPage = () => {
                             type="button"
                             onClick={() => handlePaymentMethodSelect(method.id)}
                             className={`w-full flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors ${
-                              paymentMethod === method.id ? 'bg-green-50' : ''
+                              paymentMethod === method.id ? "bg-green-50" : ""
                             }`}
                           >
                             <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
@@ -462,8 +586,7 @@ const CheckoutPage = () => {
                             </div>
                           </button>
                         ))}
-                        
-                        {/* Future payment methods placeholder */}
+
                         <div className="p-4 border-t border-gray-200">
                           <p className="text-sm text-gray-500 text-center">
                             More payment options coming soon...
@@ -484,7 +607,8 @@ const CheckoutPage = () => {
                           Cash on Delivery
                         </h3>
                         <p className="text-sm text-gray-600">
-                          Pay when the product is delivered and installed. Our team will collect payment during installation.
+                          Pay when the product is delivered and installed. Our
+                          team will collect payment during installation.
                         </p>
                       </div>
                     </div>
@@ -503,26 +627,75 @@ const CheckoutPage = () => {
             {/* Cart Items */}
             {cart?.items?.length > 0 ? (
               <div className="space-y-4 mb-6">
-                {cart.items.map((item, index) => (
-                  <div key={index} className="flex gap-4 items-center p-4 bg-white rounded-xl">
-                    <img
-                      src={item.product?.image || "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400"}
-                      alt={item.product?.name || "Product"}
-                      className="w-24 h-24 rounded-xl object-cover border"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">
-                        {item.product?.title || "High-Efficiency Solar Panel"}
-                      </h3>
-                      <p className="text-sm text-gray-600 mt-1">
-                        Quantity: <strong>{item.quantity} Unit{item.quantity > 1 ? 's' : ''}</strong>
-                      </p>
-                      <p className="text-lg font-semibold text-green-600 mt-2">
-                        ₹{(item.product?.price || 0) * item.quantity}
-                      </p>
+                {cart.items.map((item, index) => {
+                  const product = item.product;
+                  const originalPrice = parseFloat(product?.price) || 0;
+                  const sellPrice = parseFloat(product?.sell_price) || 0;
+                  const discountPercentage = parseFloat(product?.discount_percentage) || 0;
+                  const quantity = item.quantity || 1;
+                  const totalSellPrice = sellPrice * quantity;
+                  const totalOriginalPrice = originalPrice * quantity;
+                  const savings = (originalPrice - sellPrice) * quantity;
+
+                  return (
+                    <div
+                      key={index}
+                      className="flex gap-4 items-center p-4 bg-white rounded-xl"
+                    >
+                      <img
+                        src={
+                          product?.images?.[0]?.web_image_url ||
+                          product?.images?.[0]?.mobile_image_url ||
+                          "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=400"
+                        }
+                        alt={product?.title || "Product"}
+                        className="w-24 h-24 rounded-xl object-cover border"
+                      />
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">
+                          {product?.title || "Product"}
+                        </h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Quantity:{" "}
+                          <strong>
+                            {quantity} Unit{quantity > 1 ? "s" : ""}
+                          </strong>
+                        </p>
+                        
+                        {/* Price Display */}
+                        <div className="mt-2 space-y-1">
+                          {/* Selling Price */}
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold text-green-600">
+                              ₹{totalSellPrice.toFixed(2)}
+                            </span>
+                            
+                            {/* Original Price with strikethrough if discounted */}
+                            {discountPercentage > 0 && (
+                              <span className="text-sm text-gray-500 line-through">
+                                ₹{totalOriginalPrice.toFixed(2)}
+                              </span>
+                            )}
+                            
+                            {/* Discount Badge */}
+                            {discountPercentage > 0 && (
+                              <span className="text-xs font-medium px-2 py-1 rounded-full bg-red-100 text-red-600">
+                                Save {discountPercentage}%
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Savings Amount */}
+                          {savings > 0 && (
+                            <p className="text-xs text-green-600 font-medium">
+                              You save ₹{savings.toFixed(2)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500">
@@ -531,26 +704,42 @@ const CheckoutPage = () => {
             )}
 
             {/* Price Summary */}
-            <div className="space-y-3 border-t border-gray-200 pt-4">
+            <div className="space-y-4 border-t border-gray-200 pt-4">
+              {/* Subtotal */}
               <div className="flex justify-between text-gray-700">
-                <span>Product Price</span>
-                <span>₹{calculateTotal()}</span>
+                <span>Subtotal</span>
+                <span className="font-medium">₹{calculateSubtotal().toFixed(2)}</span>
               </div>
 
+              {/* Installation & Support (Included) */}
               <div className="flex justify-between text-gray-700">
                 <span>Installation & Support</span>
-                <span className="text-green-600">Included</span>
+                <span className="text-green-600 font-medium">Included</span>
               </div>
 
-              <div className="flex justify-between text-gray-700">
-                <span>GST (18%)</span>
-                <span>₹{(calculateTotal() * 0.18).toFixed(2)}</span>
-              </div>
+              {/* Total Savings */}
+              {calculateTotalSavings() > 0 && (
+                <div className="flex justify-between text-gray-700">
+                  <span>Total Savings</span>
+                  <span className="text-green-600 font-medium">
+                    -₹{calculateTotalSavings().toFixed(2)}
+                  </span>
+                </div>
+              )}
 
-              <div className="flex justify-between font-bold text-lg text-gray-900 border-t border-gray-200 pt-3">
+              {/* Divider */}
+              <div className="border-t border-gray-200 pt-3"></div>
+
+              {/* Total Amount */}
+              <div className="flex justify-between font-bold text-lg text-gray-900">
                 <span>Total Amount</span>
-                <span>₹{(calculateTotal() * 1.18).toFixed(2)}</span>
+                <span>₹{calculateSubtotal().toFixed(2)}</span>
               </div>
+
+              {/* Tax Info Note */}
+              <p className="text-xs text-gray-500 text-center pt-2">
+                All taxes included in the price
+              </p>
             </div>
 
             {/* CTA */}
@@ -563,10 +752,15 @@ const CheckoutPage = () => {
               }`}
             >
               {processing ? (
-                "Processing..."
+                <>
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  Processing...
+                </>
               ) : (
                 <>
-                  {paymentMode === "online" ? "Proceed to Payment" : "Place Order (COD)"}
+                  {paymentMode === "online"
+                    ? "Proceed to Payment"
+                    : "Place Order (COD)"}
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}

@@ -1,14 +1,43 @@
 import React from "react";
-import { CheckCircle, Phone, ArrowRight, Home } from "lucide-react";
+import { CheckCircle, Phone, ArrowRight, Home, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import DownloadInvoice from "../invoic/DownloadInvoice";
 
 const OrderSuccessPage = () => {
   const navigate = useNavigate();
+  const order = {
+    invoiceNo: "IQE-1024",
+    date: "10 Jan 2026",
+    paymentStatus: "PAID", // 🔥 important
+    paymentMethod: "ONLINE",
+
+    customer: {
+      name: "Aminul Islam",
+      address: "West Bengal, India",
+      phone: "+91 9XXXXXXXXX",
+    },
+    items: [
+      {
+        name: "Solar Inverter 5kW",
+        category: "Solar",
+        qty: 1,
+        price: 45000,
+        gst: 18,
+        total: 53100,
+      },
+    ],
+    subtotal: 45000,
+    gstAmount: 8100,
+    grandTotal: 53100,
+  };
+
+  const canDownloadInvoice =
+    order.paymentStatus === "PAID" ||
+    (order.paymentMethod === "COD" && order.orderStatus === "DELIVERED");
 
   return (
     <section className="bg-white min-h-screen flex items-center justify-center px-6 py-6 md:pt-40 ">
       <div className="max-w-3xl w-full text-center">
-
         {/* ================= ICON ================= */}
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center">
@@ -23,9 +52,9 @@ const OrderSuccessPage = () => {
 
         {/* ================= MESSAGE ================= */}
         <p className="text-lg text-gray-600 max-w-xl mx-auto mb-6">
-          Thank you for choosing <strong>IQ Energies</strong>.  
-          Your request has been received and our expert team will contact you
-          shortly to confirm installation details.
+          Thank you for choosing <strong>IQ Energies</strong>. Your request has
+          been received and our expert team will contact you shortly to confirm
+          installation details.
         </p>
 
         {/* ================= ORDER INFO ================= */}
@@ -66,8 +95,19 @@ const OrderSuccessPage = () => {
         </div>
 
         {/* ================= CTA BUTTONS ================= */}
+        {/* ================= CTA BUTTONS ================= */}
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {/* Download Invoice */}
+          {canDownloadInvoice && (
+            <DownloadInvoice order={order}>
+              <button className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition">
+                <Download className="w-5 h-5" />
+                Download Invoice
+              </button>
+            </DownloadInvoice>
+          )}
 
+          {/* Home */}
           <button
             onClick={() => navigate("/")}
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border border-gray-300 font-semibold text-gray-800 hover:bg-gray-100 transition"
@@ -76,6 +116,7 @@ const OrderSuccessPage = () => {
             Back to Home
           </button>
 
+          {/* Support */}
           <a
             href="tel:+918276863844"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold hover:shadow-lg hover:shadow-green-500/30 transition"
@@ -84,7 +125,6 @@ const OrderSuccessPage = () => {
             Call Support
           </a>
         </div>
-
       </div>
     </section>
   );

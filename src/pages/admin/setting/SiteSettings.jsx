@@ -40,7 +40,7 @@ const SiteSettings = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await api.get('/settings');
+      const response = await api.get('/settings-all');
       setSiteSettings(response.data.data || []);
       console.log('Fetched site settings:', response.data.data);
     } catch (err) {
@@ -71,17 +71,21 @@ const SiteSettings = () => {
           mobile_logo_preview: previewUrl
         }));
       }
-    } else if (type === 'checkbox') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: e.target.checked ? 1 : 0
-      }));
     } else {
       setFormData(prev => ({
         ...prev,
         [name]: value
       }));
     }
+  };
+
+  // Handle checkbox change separately
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: checked ? 1 : 0
+    }));
   };
 
   const handleAddNew = () => {
@@ -109,6 +113,8 @@ const SiteSettings = () => {
   };
 
   const handleEdit = (setting) => {
+    console.log('Editing setting is_active:', setting.is_active); // Debug
+    
     setFormData({
       logo_alt: setting.logo_alt || '',
       company_name: setting.company_name || '',
@@ -145,19 +151,26 @@ const SiteSettings = () => {
       // Append all form fields except preview URLs
       Object.keys(formData).forEach(key => {
         if (!key.includes('_preview') && formData[key] !== null && formData[key] !== '') {
-          formDataToSend.append(key, formData[key]);
+          if (key === 'is_active') {
+            formDataToSend.append(key, formData[key].toString());
+          } else {
+            formDataToSend.append(key, formData[key]);
+          }
         }
       });
 
       // Log form data for debugging
-      console.log('Form data to send:', Object.fromEntries(formDataToSend.entries()));
+      console.log('Form data to send:', {
+        is_active: formData.is_active,
+        ...Object.fromEntries(formDataToSend.entries())
+      });
 
       // Use POST for both create and update
       const endpoint = editingId 
         ? `/admin/settings/${editingId}`
         : '/admin/settings';
       
-      const method = editingId ? 'post' : 'post';
+      const method = 'post';
       
       const response = await api[method](endpoint, formDataToSend);
 
@@ -226,7 +239,7 @@ const SiteSettings = () => {
 
     try {
       setError(null);
-      const response = await api.delete(`/admin/site-settings/${id}`);
+      const response = await api.delete(`/admin/settings/${id}`);
       
       if (response.data.success) {
         setSuccess('Site setting deleted successfully!');
@@ -248,8 +261,13 @@ const SiteSettings = () => {
   const handleStatusToggle = async (id, currentStatus) => {
     try {
       setError(null);
-      const response = await api.put(`/admin/site-settings/${id}/status`, {
-        is_active: currentStatus ? false : true,
+      const newStatus = !currentStatus;
+      
+      console.log('Toggling status:', { id, currentStatus, newStatus });
+      
+      // Try with PUT method to your endpoint
+      const response = await api.put(`/admin/settings/${id}`, {
+        is_active: newStatus ? 1 : 0
       });
       
       if (response.data.success) {
@@ -264,8 +282,30 @@ const SiteSettings = () => {
         setError(response.data.message || 'Failed to update status.');
       }
     } catch (err) {
-      setError('Failed to update status. Please try again.');
       console.error('Error updating status:', err);
+      
+      // Try alternative endpoint
+      try {
+        const postResponse = await api.post(`/admin/settings/${id}/status`, {
+          is_active: !currentStatus,
+        });
+        
+        if (postResponse.data.success) {
+          setSuccess('Status updated successfully!');
+          await fetchSiteSettings();
+          setTimeout(() => {
+            setSuccess(null);
+          }, 3000);
+        } else {
+          setError(postResponse.data.message || 'Failed to update status.');
+        }
+      } catch (postErr) {
+        const errorMessage = postErr.response?.data?.message || 
+                           postErr.response?.data?.error || 
+                           'Failed to update status. Please try again.';
+        setError(errorMessage);
+        console.error('Error updating status with alternative endpoint:', postErr);
+      }
     }
   };
 
@@ -663,20 +703,19 @@ const SiteSettings = () => {
                 {/* Status */}
                 <div className="pb-6">
                   <div className="flex items-center space-x-3">
-                    <div className="relative">
+                    <label className="relative inline-flex items-center cursor-pointer">
                       <input
                         type="checkbox"
                         name="is_active"
                         checked={formData.is_active === 1}
-                        onChange={handleInputChange}
-                        className="sr-only"
+                        onChange={handleCheckboxChange}
+                        className="sr-only peer"
                       />
-                      <div className={`block w-14 h-8 rounded-full ${formData.is_active === 1 ? 'bg-gray-900' : 'bg-gray-300'}`}></div>
-                      <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition-transform ${formData.is_active === 1 ? 'transform translate-x-6' : ''}`}></div>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formData.is_active === 1 ? 'Active (This setting will be used on the site)' : 'Inactive (This setting will be hidden)'}
-                    </span>
+                      <div className="w-14 h-8 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gray-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-gray-900"></div>
+                      <span className="ml-3 text-sm font-medium text-gray-900">
+                        {formData.is_active === 1 ? 'Active (This setting will be used on the site)' : 'Inactive (This setting will be hidden)'}
+                      </span>
+                    </label>
                   </div>
                 </div>
 

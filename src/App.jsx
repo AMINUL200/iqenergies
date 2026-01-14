@@ -48,6 +48,10 @@ import HandleProduct from "./pages/admin/product/HandleProduct";
 import HandleBrochureCertification from "./pages/admin/about/HandleBrochureCertification";
 import HandleGSTMaster from "./pages/admin/payment/HandleGSTMaster";
 import CustomerSupport from "./pages/suport/CustomerSupport";
+import HandlePaymentGatWay from "./pages/admin/payment/HandlePaymentGatWay";
+import HandleTechnicalSupport from "./pages/suport/HandleTechnicalSupport";
+import HandleSEOMaster from "./pages/admin/setting/HandleSEOMaster";
+import HandleBookingSurvey from "./pages/suport/HandleBookingSurvey";
 
 const App = () => {
   return (
@@ -83,7 +87,7 @@ const App = () => {
             <Route path="/orders/:slug" element={<OrderTrackingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
-            <Route path="/customer-support" element={<CustomerSupport />} />
+            {/* <Route path="/customer-support" element={<CustomerSupport />} /> */}
           </Route>
         </Route>
 
@@ -148,23 +152,25 @@ const App = () => {
               element={<HandleServicesFeature />}
             />
             <Route path="site-settings" element={<SiteSettings />} />
+            <Route path="seo-settings" element={<HandleSEOMaster />} />
             {/* product */}
             <Route
               path="handle-product/category"
               element={<HandleProductCategory />}
             />
-            <Route
-              path="handle-product/product"
-              element={<HandleProduct />}
-            />
+            <Route path="handle-product/product" element={<HandleProduct />} />
             <Route
               path="brochure_certification"
               element={<HandleBrochureCertification />}
             />
+            <Route path="gst-master" element={<HandleGSTMaster />} />
+            <Route path="payment-gateway" element={<HandlePaymentGatWay />} />
+            <Route path="technical-supports" element={<CustomerSupport />} />
             <Route
-              path="gst-master"
-              element={<HandleGSTMaster />}
+              path="technical-support-handle"
+              element={<HandleTechnicalSupport />}
             />
+            <Route path="booking-survey" element={<HandleBookingSurvey />} />
           </Route>
         </Route>
       </Routes>

@@ -108,43 +108,6 @@ const ProductDetails = () => {
     }
   };
 
-  const handleAddToCart = async () => {
-    if (!product) return;
-
-    try {
-      setAddingToCart(true);
-
-      // Add product to cart with selected quantity
-      addToCart(
-        {
-          id: product.id,
-          title: product.title,
-          price: parseFloat(product.price),
-          sellingPrice: parseFloat(product.sell_price),
-          discountPercentage: parseFloat(product.discount_percentage),
-          image: product.images?.[0]?.web_image_url,
-          slug: product.slug,
-          category: product.category?.name,
-          short_description: product.short_description,
-        },
-        quantity
-      );
-
-      // Dispatch cart update event
-      window.dispatchEvent(new CustomEvent("cartUpdated"));
-
-      // Optional: Show success message or navigate to cart
-      console.log(`Added ${quantity} ${product.title} to cart`);
-
-      // You can add a toast notification here
-      alert(`Added ${quantity} ${product.title} to cart!`);
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      alert("Failed to add to cart. Please try again.");
-    } finally {
-      setAddingToCart(false);
-    }
-  };
 
   const handleBuyNow = async () => {
     if (!product) return;

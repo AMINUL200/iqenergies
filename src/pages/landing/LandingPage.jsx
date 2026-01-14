@@ -12,6 +12,7 @@ import ContactUsSection from "../../component/landingpage/ContactUsSection";
 import SolarInverterSection from "../../component/landingpage/SolarInverterSection";
 import PageLoader from "../../component/common/PageLoader";
 import { useLandingData } from "../../routes/useLandingData";
+import SolarFranchise from "../../component/landingpage/SolarFranchise";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -110,7 +111,8 @@ const LandingPage = () => {
       </section>
 
       {/* solar inverter section */}
-      <SolarInverterSection />
+      {/* <SolarInverterSection /> */}
+      <SolarFranchise/>
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>

@@ -91,6 +91,12 @@ const Navbar = ({ toggleMenu }) => {
       sectionId: "solutions",
     },
     {
+      id: "franchise",
+      label: "Franchise",
+      type: "scroll",
+      sectionId: "franchise",
+    },
+    {
       id: "services",
       label: "Services",
       type: "scroll",
