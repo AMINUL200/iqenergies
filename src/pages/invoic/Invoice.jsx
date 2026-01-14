@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import "./Invoice.css";
+// import "./Invoice.css";
 
 const Invoice = forwardRef(({ order }, ref) => {
   return (
