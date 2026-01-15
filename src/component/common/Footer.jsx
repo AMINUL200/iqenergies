@@ -35,13 +35,13 @@ const Footer = () => {
             </p>
 
             {/* Customer Support Link - Simple addition */}
-            <p
+            {/* <p
               onClick={() => navigate("/customer-support")}
               className="cursor-pointer font-medium hover:underline mt-4"
               style={{ color: "#0F766E" }}
             >
               Customer Support →
-            </p>
+            </p> */}
           </div>
 
           {/* ================= CENTER: BROCHURE QR ================= */}

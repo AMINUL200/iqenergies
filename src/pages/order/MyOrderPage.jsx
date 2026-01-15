@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Package,
   Calendar,
@@ -23,9 +23,12 @@ import {
   Shield,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../../utils/app";
+import InvoiceGenerator from "../invoic/InvoiceGenerator";
 
 const MyOrderPage = () => {
-    const navigate = useNavigate();
+  const navigate = useNavigate();
+
   /* ================= BRAND COLORS ================= */
   const colors = {
     primary: "#4CAF50",
@@ -43,108 +46,109 @@ const MyOrderPage = () => {
     info: "#3B82F6",
   };
 
-  // 🔥 Dummy Orders Data
-  const initialOrders = [
-    {
-      id: "IQE-10231",
-      product: "Solar Panel 550W Mono PERC",
-      category: "Solar Panels",
-      date: "12 Aug 2025",
-      price: "₹18,999",
-      status: "delivered",
-      estimatedDelivery: "15 Aug 2025",
-      quantity: 4,
-      rating: 4.5,
-      trackingId: "TRK7890123456",
-      paymentMethod: "UPI",
-      warranty: "25 years",
-      customerSupport: "Available",
-    },
-    {
-      id: "IQE-10218",
-      product: "MPPT Solar Charge Controller 60A",
-      category: "Controllers",
-      date: "03 Aug 2025",
-      price: "₹4,499",
-      status: "processing",
-      estimatedDelivery: "10 Aug 2025",
-      quantity: 1,
-      rating: null,
-      trackingId: "TRK1234567890",
-      paymentMethod: "Credit Card",
-      warranty: "5 years",
-      customerSupport: "Available",
-    },
-    {
-      id: "IQE-10195",
-      product: "Hybrid Inverter 3kW with Wi-Fi",
-      category: "Inverters",
-      date: "28 Jul 2025",
-      price: "₹42,000",
-      status: "cancelled",
-      estimatedDelivery: "05 Aug 2025",
-      quantity: 1,
-      rating: null,
-      trackingId: null,
-      paymentMethod: "Net Banking",
-      warranty: "10 years",
-      customerSupport: "Closed",
-    },
-    {
-      id: "IQE-10172",
-      product: "Lithium Battery 5kWh LiFePO4",
-      category: "Batteries",
-      date: "15 Jul 2025",
-      price: "₹65,000",
-      status: "shipped",
-      estimatedDelivery: "20 Jul 2025",
-      quantity: 2,
-      rating: 4.8,
-      trackingId: "TRK3456789012",
-      paymentMethod: "Debit Card",
-      warranty: "10 years",
-      customerSupport: "Available",
-    },
-    {
-      id: "IQE-10150",
-      product: "Solar Mounting Structure Kit",
-      category: "Accessories",
-      date: "05 Jul 2025",
-      price: "₹12,500",
-      status: "delivered",
-      estimatedDelivery: "08 Jul 2025",
-      quantity: 1,
-      rating: 4.2,
-      trackingId: "TRK9012345678",
-      paymentMethod: "COD",
-      warranty: "2 years",
-      customerSupport: "Available",
-    },
-  ];
-
-  const [orders, setOrders] = useState(initialOrders);
+  // State for orders
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
   const [expandedOrder, setExpandedOrder] = useState(null);
+  const [selectedOrderForInvoice, setSelectedOrderForInvoice] = useState(null);
+  const [showInvoiceModal, setShowInvoiceModal] = useState(false);
+
+  /* ================= FETCH ORDERS ================= */
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/orders"); // Adjust API endpoint as needed
+
+      if (response.data?.success) {
+        setOrders(response.data.data || []);
+      } else {
+        console.error("Failed to fetch orders:", response.data);
+      }
+    } catch (error) {
+      console.error("Error fetching orders:", error);
+      alert("Failed to load orders. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  /* ================= FORMAT FUNCTIONS ================= */
+  const formatCurrency = (amount) => {
+    const num = parseFloat(amount);
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+
+  const formatDate = (dateString) => {
+    const [day, month, year] = dateString.split("-");
+    const date = new Date(`${year}-${month}-${day}`);
+    return date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  /* ================= INVOICE HANDLERS ================= */
+  const handleViewInvoice = (order) => {
+    // Prepare order data for invoice with all required fields
+    const invoiceOrder = {
+      ...order,
+      order_number: order.order_number,
+      order_date: order.order_date,
+      customer: {
+        name: order.customer_name,
+        email: order.email,
+        mobile: order.mobile,
+        address: order.installation_address,
+        state: order.state,
+        pincode: order.pincode,
+      },
+      amounts: {
+        subtotal: order.subtotal,
+        total: order.total,
+        cgst: order.cgst || 0,
+        sgst: order.sgst || 0,
+        igst: order.igst || 0,
+      },
+      items: order.items.map(item => ({
+        ...item,
+        base_price: (parseFloat(item.total) / parseFloat(item.quantity || 1)).toFixed(2),
+        quantity: item.quantity || 1,
+      })),
+      payment_method: order.payment_method || "online",
+      payment_status: order.payment_status,
+    };
+    
+    setSelectedOrderForInvoice(invoiceOrder);
+    setShowInvoiceModal(true);
+  };
+
+  const handleCloseInvoice = () => {
+    setShowInvoiceModal(false);
+    setSelectedOrderForInvoice(null);
+  };
 
   /* ================= FILTERS & STATS ================= */
   const statusOptions = [
     { value: "all", label: "All Status", icon: BarChart },
+    { value: "confirmed", label: "Confirmed", icon: CheckCircle },
+    { value: "pending", label: "Pending", icon: Clock },
+    { value: "cancelled", label: "Cancelled", icon: XCircle },
     { value: "processing", label: "Processing", icon: RefreshCw },
     { value: "shipped", label: "Shipped", icon: Truck },
     { value: "delivered", label: "Delivered", icon: CheckCircle },
-    { value: "cancelled", label: "Cancelled", icon: XCircle },
-  ];
-
-  const categoryOptions = [
-    { value: "all", label: "All Categories" },
-    { value: "Solar Panels", label: "Solar Panels" },
-    { value: "Inverters", label: "Inverters" },
-    { value: "Batteries", label: "Batteries" },
-    { value: "Controllers", label: "Controllers" },
-    { value: "Accessories", label: "Accessories" },
   ];
 
   const sortOptions = [
@@ -157,70 +161,50 @@ const MyOrderPage = () => {
   /* ================= STATS CALCULATION ================= */
   const stats = {
     total: orders.length,
-    delivered: orders.filter(o => o.status === "delivered").length,
-    processing: orders.filter(o => o.status === "processing").length,
-    cancelled: orders.filter(o => o.status === "cancelled").length,
+    confirmed: orders.filter((o) => o.order_status === "confirmed").length,
+    pending: orders.filter((o) => o.order_status === "pending").length,
+    paid: orders.filter((o) => o.payment_status === "paid").length,
     totalValue: orders.reduce((sum, order) => {
-      const price = parseInt(order.price.replace(/[^0-9]/g, ""));
-      return sum + price;
+      return sum + parseFloat(order.total || 0);
     }, 0),
   };
 
-  /* ================= FILTERED ORDERS ================= */
-  const filteredOrders = orders
-    .filter(order => {
-      const matchesSearch = 
-        order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.product.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.category.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = 
-        selectedStatus === "all" || order.status === selectedStatus;
-      
-      const matchesCategory = 
-        selectedCategory === "all" || order.category === selectedCategory;
-      
-      return matchesSearch && matchesStatus && matchesCategory;
-    })
-    .sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return new Date(b.date) - new Date(a.date);
-        case "oldest":
-          return new Date(a.date) - new Date(b.date);
-        case "price-high":
-          return parseInt(b.price.replace(/[^0-9]/g, "")) - 
-                 parseInt(a.price.replace(/[^0-9]/g, ""));
-        case "price-low":
-          return parseInt(a.price.replace(/[^0-9]/g, "")) - 
-                 parseInt(b.price.replace(/[^0-9]/g, ""));
-        default:
-          return 0;
-      }
-    });
-
   /* ================= STATUS CONFIGURATION ================= */
   const statusConfig = {
-    delivered: {
-      label: "Delivered",
+    confirmed: {
+      label: "Confirmed",
       color: "text-emerald-600",
       bgColor: "bg-emerald-50",
       icon: CheckCircle,
-      progress: 100,
+      progress: 25,
+    },
+    pending: {
+      label: "Pending",
+      color: "text-amber-600",
+      bgColor: "bg-amber-50",
+      icon: Clock,
+      progress: 10,
     },
     processing: {
       label: "Processing",
-      color: "text-amber-600",
-      bgColor: "bg-amber-50",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
       icon: RefreshCw,
-      progress: 30,
+      progress: 50,
     },
     shipped: {
       label: "Shipped",
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
+      color: "text-indigo-600",
+      bgColor: "bg-indigo-50",
       icon: Truck,
-      progress: 70,
+      progress: 75,
+    },
+    delivered: {
+      label: "Delivered",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
+      icon: CheckCircle,
+      progress: 100,
     },
     cancelled: {
       label: "Cancelled",
@@ -229,39 +213,91 @@ const MyOrderPage = () => {
       icon: XCircle,
       progress: 0,
     },
+    installation_scheduled: {
+      color: colors.info,
+      label: "Installation Scheduled",
+      icon: Calendar,
+      progress: 100,
+      description: "Installation date has been scheduled",
+    },
   };
+
+  /* ================= PAYMENT STATUS CONFIG ================= */
+  const paymentStatusConfig = {
+    paid: {
+      label: "Paid",
+      color: "text-emerald-600",
+      bgColor: "bg-emerald-50",
+    },
+    pending: {
+      label: "Pending",
+      color: "text-amber-600",
+      bgColor: "bg-amber-50",
+    },
+    failed: {
+      label: "Failed",
+      color: "text-rose-600",
+      bgColor: "bg-rose-50",
+    },
+  };
+
+  /* ================= FILTERED ORDERS ================= */
+  const filteredOrders = orders
+    .filter((order) => {
+      const matchesSearch =
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.customer_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.items.some((item) =>
+          item.title.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+
+      const matchesStatus =
+        selectedStatus === "all" || order.order_status === selectedStatus;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.order_date.split("-").reverse().join("-"));
+      const dateB = new Date(b.order_date.split("-").reverse().join("-"));
+
+      switch (sortBy) {
+        case "newest":
+          return dateB - dateA;
+        case "oldest":
+          return dateA - dateB;
+        case "price-high":
+          return parseFloat(b.total) - parseFloat(a.total);
+        case "price-low":
+          return parseFloat(a.total) - parseFloat(b.total);
+        default:
+          return 0;
+      }
+    });
 
   /* ================= HANDLERS ================= */
   const toggleOrderDetails = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId);
   };
 
-  const downloadInvoice = (orderId) => {
-    alert(`Downloading invoice for ${orderId}`);
-    // Implement actual download logic here
+  const viewOrderDetails = (orderId) => {
+    navigate(`/orders/${orderId}`);
   };
 
-  const trackOrder = (trackingId) => {
-    // alert(`Tracking order: ${trackingId}`);
-    // Implement tracking logic here
-    navigate(`/orders/${trackingId}`);
-  };
-
-  const contactSupport = (orderId) => {
-    alert(`Contacting support for ${orderId}`);
+  const contactSupport = (orderNumber) => {
+    alert(`Contacting support for ${orderNumber}`);
     // Implement support contact logic here
   };
 
-  const rateProduct = (orderId) => {
-    alert(`Rate product for ${orderId}`);
-    // Implement rating logic here
+  const retryPayment = (orderId) => {
+    alert(`Retrying payment for order ${orderId}`);
+    // Implement payment retry logic here
   };
 
   /* ================= COMPONENTS ================= */
   const StatusBadge = ({ status }) => {
-    const config = statusConfig[status];
+    const config = statusConfig[status] || statusConfig.pending;
     const Icon = config.icon;
-    
+
     return (
       <span
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${config.color} ${config.bgColor}`}
@@ -272,13 +308,25 @@ const MyOrderPage = () => {
     );
   };
 
+  const PaymentStatusBadge = ({ status }) => {
+    const config = paymentStatusConfig[status] || paymentStatusConfig.pending;
+
+    return (
+      <span
+        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium ${config.color} ${config.bgColor}`}
+      >
+        {config.label}
+      </span>
+    );
+  };
+
   const ProgressBar = ({ percentage }) => (
     <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-      <div 
+      <div
         className="h-full transition-all duration-500"
-        style={{ 
+        style={{
           width: `${percentage}%`,
-          backgroundColor: colors.primary 
+          backgroundColor: colors.primary,
         }}
       />
     </div>
@@ -293,7 +341,7 @@ const MyOrderPage = () => {
             {value}
           </p>
         </div>
-        <div 
+        <div
           className="p-3 rounded-lg"
           style={{ backgroundColor: `${color}15` }}
         >
@@ -303,420 +351,511 @@ const MyOrderPage = () => {
     </div>
   );
 
+  /* ================= LOADING STATE ================= */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-4 md:px-8 lg:px-16 py-10 md:pt-40 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 px-4 md:px-8 lg:px-16 py-10 md:pt-40">
-      {/* ================= HEADER SECTION ================= */}
-      <div className="mb-8">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1
-              className="text-2xl md:text-3xl font-bold"
-              style={{ color: colors.text }}
-            >
-              My Orders
-            </h1>
-            <p className="mt-1 text-sm" style={{ color: colors.muted }}>
-              Track and manage your IQEnergies purchases
-            </p>
-          </div>
-          <button
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all hover:scale-105 cursor-pointer"
-            style={{
-              backgroundColor: colors.primary,
-              color: colors.bgLight,
-            }}
-          >
-            <FileText size={18} />
-            Download All Invoices
-          </button>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-          <StatCard
-            title="Total Orders"
-            value={stats.total}
-            icon={Package}
-            color={colors.primary}
-          />
-          <StatCard
-            title="Delivered"
-            value={stats.delivered}
-            icon={CheckCircle}
-            color={colors.success}
-          />
-          <StatCard
-            title="In Progress"
-            value={stats.processing}
-            icon={RefreshCw}
-            color={colors.warning}
-          />
-          <StatCard
-            title="Total Spent"
-            value={`₹${(stats.totalValue / 1000).toFixed(0)}K`}
-            icon={TrendingUp}
-            color={colors.secondary}
-          />
-        </div>
-      </div>
-
-      {/* ================= FILTERS & SEARCH ================= */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
-        <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-              size={18} 
-            />
-            <input
-              type="text"
-              placeholder="Search by order ID, product, or category..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
-              style={{ color: colors.text }}
-            />
-          </div>
-
-          {/* Filters */}
-          <div className="flex flex-wrap gap-2">
-            {/* Status Filter */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition">
-                <Filter size={16} />
-                <span style={{ color: colors.text }}>Status</span>
-                <ChevronDown size={16} />
-              </button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                {statusOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedStatus(option.value)}
-                    className={`flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                      selectedStatus === option.value ? 'bg-green-50' : ''
-                    }`}
-                  >
-                    {option.icon && <option.icon size={14} />}
-                    <span style={{ color: colors.text }}>{option.label}</span>
-                  </button>
-                ))}
-              </div>
+    <>
+      <div className="min-h-screen bg-gray-50 px-4 md:px-8 lg:px-16 py-10 md:pt-40">
+        {/* ================= HEADER SECTION ================= */}
+        <div className="mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1
+                className="text-2xl md:text-3xl font-bold"
+                style={{ color: colors.text }}
+              >
+                My Orders
+              </h1>
+              <p className="mt-1 text-sm" style={{ color: colors.muted }}>
+                Track and manage your IQEnergies purchases
+              </p>
             </div>
-
-            {/* Category Filter */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition">
-                <Package size={16} />
-                <span style={{ color: colors.text }}>Category</span>
-                <ChevronDown size={16} />
-              </button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                {categoryOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setSelectedCategory(option.value)}
-                    className={`w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                      selectedCategory === option.value ? 'bg-green-50' : ''
-                    }`}
-                  >
-                    <span style={{ color: colors.text }}>{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Sort */}
-            <div className="relative group">
-              <button className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition">
-                <Calendar size={16} />
-                <span style={{ color: colors.text }}>
-                  {sortOptions.find(s => s.value === sortBy)?.label}
-                </span>
-                <ChevronDown size={16} />
-              </button>
-              <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
-                {sortOptions.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setSortBy(option.value)}
-                    className={`w-full px-3 py-2 text-left hover:bg-gray-50 ${
-                      sortBy === option.value ? 'bg-green-50' : ''
-                    }`}
-                  >
-                    <span style={{ color: colors.text }}>{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ================= ORDERS LIST ================= */}
-      <div className="space-y-4">
-        {filteredOrders.map((order) => {
-          const status = statusConfig[order.status];
-          
-          return (
-            <div
-              key={order.id}
-              className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
-            >
-              {/* Order Header */}
-              <div className="p-5">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                  {/* Order Info */}
-                  <div className="flex items-start gap-4">
-                    <div
-                      className="p-3 rounded-lg flex-shrink-0"
-                      style={{ backgroundColor: `${colors.primary}15` }}
-                    >
-                      <Package size={24} style={{ color: colors.primary }} />
-                    </div>
-
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-lg" style={{ color: colors.text }}>
-                          {order.product}
-                        </h3>
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
-                          {order.category}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-4 text-sm">
-                        <p style={{ color: colors.muted }}>
-                          Order ID: <span className="font-medium">{order.id}</span>
-                        </p>
-                        <span style={{ color: colors.muted }}>•</span>
-                        <span className="flex items-center gap-1" style={{ color: colors.muted }}>
-                          <Calendar size={14} />
-                          {order.date}
-                        </span>
-                        <span style={{ color: colors.muted }}>•</span>
-                        <span className="flex items-center gap-1 font-medium" style={{ color: colors.primary }}>
-                          <CreditCard size={14} />
-                          {order.price}
-                        </span>
-                        <span style={{ color: colors.muted }}>•</span>
-                        <span style={{ color: colors.muted }}>
-                          Qty: {order.quantity}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Status & Actions */}
-                  <div className="flex flex-col items-end gap-3">
-                    <StatusBadge status={order.status} />
-                    <button
-                      onClick={() => toggleOrderDetails(order.id)}
-                      className="flex items-center gap-2 text-sm font-medium transition hover:gap-3 group"
-                      style={{ color: colors.primary }}
-                    >
-                      {expandedOrder === order.id ? 'Hide Details' : 'View Details'}
-                      <ArrowRight 
-                        size={16} 
-                        className={`transition-transform ${expandedOrder === order.id ? 'rotate-90' : ''}`}
-                      />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Progress Bar */}
-                <div className="mt-4">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>Order Placed</span>
-                    <span>Estimated: {order.estimatedDelivery}</span>
-                  </div>
-                  <ProgressBar percentage={status.progress} />
-                </div>
-              </div>
-
-              {/* Expanded Details */}
-              {expandedOrder === order.id && (
-                <div 
-                  className="border-t border-gray-100 p-5 animate-fadeIn"
-                  style={{ backgroundColor: colors.bgSoft }}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Order Details */}
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-500 mb-2">Order Details</h4>
-                      <div className="space-y-2">
-                        <p className="text-sm">
-                          <span className="text-gray-600">Payment:</span>{' '}
-                          <span className="font-medium">{order.paymentMethod}</span>
-                        </p>
-                        <p className="text-sm">
-                          <span className="text-gray-600">Warranty:</span>{' '}
-                          <span className="font-medium">{order.warranty}</span>
-                        </p>
-                        <p className="text-sm">
-                          <span className="text-gray-600">Support:</span>{' '}
-                          <span className={`font-medium ${
-                            order.customerSupport === 'Available' ? 'text-green-600' : 'text-red-600'
-                          }`}>
-                            {order.customerSupport}
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Tracking */}
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-500 mb-2">Tracking</h4>
-                      {order.trackingId ? (
-                        <div className="space-y-2">
-                          <p className="text-sm">
-                            <span className="text-gray-600">Tracking ID:</span>{' '}
-                            <span className="font-medium">{order.trackingId}</span>
-                          </p>
-                          <button
-                            onClick={() => trackOrder(order.trackingId)}
-                            className="flex items-center gap-2 text-sm font-medium transition hover:gap-3"
-                            style={{ color: colors.primary }}
-                          >
-                            <Truck size={14} />
-                            Track Order
-                          </button>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-gray-500">No tracking available</p>
-                      )}
-                    </div>
-
-                    {/* Rating */}
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-500 mb-2">Product Rating</h4>
-                      {order.rating ? (
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center">
-                            {[...Array(5)].map((_, i) => (
-                              <Star
-                                key={i}
-                                size={16}
-                                className={`${
-                                  i < Math.floor(order.rating)
-                                    ? 'text-amber-400 fill-amber-400'
-                                    : 'text-gray-300'
-                                }`}
-                              />
-                            ))}
-                          </div>
-                          <span className="font-medium">{order.rating}/5</span>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => rateProduct(order.id)}
-                          className="flex items-center gap-2 text-sm font-medium transition hover:gap-3"
-                          style={{ color: colors.primary }}
-                        >
-                          <Star size={14} />
-                          Rate Product
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div>
-                      <h4 className="font-medium text-sm text-gray-500 mb-2">Actions</h4>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          onClick={() => downloadInvoice(order.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                          style={{ color: colors.text }}
-                        >
-                          <Download size={14} />
-                          Invoice
-                        </button>
-                        <button
-                          onClick={() => contactSupport(order.id)}
-                          className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                          style={{ color: colors.text }}
-                        >
-                          <MessageSquare size={14} />
-                          Support
-                        </button>
-                        {order.status === 'delivered' && (
-                          <button
-                            className="flex items-center gap-2 px-3 py-1.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
-                            style={{ color: colors.text }}
-                          >
-                            <RefreshCw size={14} />
-                            Return
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Warranty Info */}
-                  <div className="mt-4 p-3 rounded-lg bg-blue-50 border border-blue-100">
-                    <div className="flex items-start gap-2">
-                      <Shield size={16} className="text-blue-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-sm font-medium text-blue-800">
-                          Warranty Protection
-                        </p>
-                        <p className="text-xs text-blue-600 mt-1">
-                          Your product is covered by a {order.warranty} warranty. 
-                          Contact support for any technical issues or repairs.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Empty State */}
-        {filteredOrders.length === 0 && (
-          <div
-            className="mt-12 flex flex-col items-center justify-center text-center py-12"
-            style={{ color: colors.muted }}
-          >
-            <Package size={64} className="mb-4 opacity-30" />
-            <h3 className="text-xl font-medium mb-2" style={{ color: colors.text }}>
-              No Orders Found
-            </h3>
-            <p className="max-w-md mx-auto">
-              No orders match your current filters. Try adjusting your search or filters.
-            </p>
             <button
-              onClick={() => {
-                setSearchTerm("");
-                setSelectedStatus("all");
-                setSelectedCategory("all");
-              }}
-              className="mt-4 px-4 py-2 rounded-lg font-medium transition-all hover:scale-105"
+              onClick={() => fetchOrders()}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition-all hover:scale-105 cursor-pointer"
               style={{
                 backgroundColor: colors.primary,
                 color: colors.bgLight,
               }}
             >
-              Clear All Filters
+              <RefreshCw size={18} />
+              Refresh Orders
             </button>
           </div>
-        )}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            <StatCard
+              title="Total Orders"
+              value={stats.total}
+              icon={Package}
+              color={colors.primary}
+            />
+            <StatCard
+              title="Confirmed"
+              value={stats.confirmed}
+              icon={CheckCircle}
+              color={colors.success}
+            />
+            <StatCard
+              title="Pending"
+              value={stats.pending}
+              icon={Clock}
+              color={colors.warning}
+            />
+            <StatCard
+              title="Total Spent"
+              value={formatCurrency(stats.totalValue)}
+              icon={TrendingUp}
+              color={colors.secondary}
+            />
+          </div>
+        </div>
+
+        {/* ================= FILTERS & SEARCH ================= */}
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <input
+                type="text"
+                placeholder="Search by order number, customer name or product..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
+                style={{ color: colors.text }}
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="flex flex-wrap gap-2">
+              {/* Status Filter */}
+              <div className="relative group">
+                <button className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition">
+                  <Filter size={16} />
+                  <span style={{ color: colors.text }}>Status</span>
+                  <ChevronDown size={16} />
+                </button>
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  {statusOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setSelectedStatus(option.value)}
+                      className={`flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                        selectedStatus === option.value ? "bg-green-50" : ""
+                      }`}
+                    >
+                      {option.icon && <option.icon size={14} />}
+                      <span style={{ color: colors.text }}>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Sort */}
+              <div className="relative group">
+                <button className="flex items-center gap-2 px-3 py-2.5 border border-gray-200 rounded-lg hover:border-gray-300 transition">
+                  <Calendar size={16} />
+                  <span style={{ color: colors.text }}>
+                    {sortOptions.find((s) => s.value === sortBy)?.label}
+                  </span>
+                  <ChevronDown size={16} />
+                </button>
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setSortBy(option.value)}
+                      className={`w-full px-3 py-2 text-left hover:bg-gray-50 ${
+                        sortBy === option.value ? "bg-green-50" : ""
+                      }`}
+                    >
+                      <span style={{ color: colors.text }}>{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ================= ORDERS LIST ================= */}
+        <div className="space-y-4">
+          {filteredOrders.map((order) => {
+            const status =
+              statusConfig[order.order_status] || statusConfig.pending;
+            const paymentStatus =
+              paymentStatusConfig[order.payment_status] ||
+              paymentStatusConfig.pending;
+
+            return (
+              <div
+                key={order.order_id}
+                className="bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
+              >
+                {/* Order Header */}
+                <div className="p-5">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    {/* Order Info */}
+                    <div className="flex items-start gap-4">
+                      <div
+                        className="p-3 rounded-lg flex-shrink-0"
+                        style={{ backgroundColor: `${colors.primary}15` }}
+                      >
+                        <Package size={24} style={{ color: colors.primary }} />
+                      </div>
+
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <h3
+                            className="font-semibold text-lg"
+                            style={{ color: colors.text }}
+                          >
+                            Order #{order.order_number}
+                          </h3>
+                          <StatusBadge status={order.order_status} />
+                          <PaymentStatusBadge status={order.payment_status} />
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-4 text-sm mt-2">
+                          <span
+                            className="flex items-center gap-1"
+                            style={{ color: colors.muted }}
+                          >
+                            <Calendar size={14} />
+                            {formatDate(order.order_date)}
+                          </span>
+                          <span style={{ color: colors.muted }}>•</span>
+                          <span
+                            className="flex items-center gap-1 font-medium"
+                            style={{ color: colors.primary }}
+                          >
+                            <CreditCard size={14} />
+                            {formatCurrency(order.total)}
+                          </span>
+                          <span style={{ color: colors.muted }}>•</span>
+                          <span style={{ color: colors.muted }}>
+                            Customer: {order.customer_name}
+                          </span>
+                        </div>
+
+                        {/* Products Preview */}
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {order.items.slice(0, 3).map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <img
+                                src={item.image}
+                                alt={item.title}
+                                className="w-8 h-8 rounded-md object-cover"
+                              />
+                              <span className="text-sm text-gray-600 truncate max-w-[150px]">
+                                {item.title} × {item.quantity || 1}
+                              </span>
+                            </div>
+                          ))}
+                          {order.items.length > 3 && (
+                            <span className="text-sm text-gray-500">
+                              +{order.items.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-col items-end gap-3">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => viewOrderDetails(order.order_id)}
+                          className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all hover:scale-105"
+                          style={{
+                            backgroundColor: colors.primary,
+                            color: colors.bgLight,
+                          }}
+                        >
+                          <Eye size={16} />
+                          View Details
+                        </button>
+                        <button
+                          onClick={() => toggleOrderDetails(order.order_id)}
+                          className="flex items-center gap-2 text-sm font-medium transition hover:gap-3 group"
+                          style={{ color: colors.primary }}
+                        >
+                          {expandedOrder === order.order_id
+                            ? "Hide Details"
+                            : "Quick View"}
+                          <ArrowRight
+                            size={16}
+                            className={`transition-transform ${
+                              expandedOrder === order.order_id ? "rotate-90" : ""
+                            }`}
+                          />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs text-gray-500 mb-1">
+                      <span>Order Placed</span>
+                      <span>Status: {status.label}</span>
+                    </div>
+                    <ProgressBar percentage={status.progress} />
+                  </div>
+                </div>
+
+                {/* Expanded Details */}
+                {expandedOrder === order.order_id && (
+                  <div
+                    className="border-t border-gray-100 p-5 animate-fadeIn"
+                    style={{ backgroundColor: colors.bgSoft }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      {/* Order Details */}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-500 mb-2">
+                          Order Details
+                        </h4>
+                        <div className="space-y-2">
+                          <p className="text-sm">
+                            <span className="text-gray-600">Order Number:</span>{" "}
+                            <span className="font-medium">
+                              {order.order_number}
+                            </span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Order Date:</span>{" "}
+                            <span className="font-medium">
+                              {formatDate(order.order_date)}
+                            </span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Total Amount:</span>{" "}
+                            <span className="font-medium">
+                              {formatCurrency(order.total)}
+                            </span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Payment Method:</span>{" "}
+                            <span className="font-medium">
+                              {order.payment_method === "razorpay" ? "Online Payment" : 
+                               order.payment_method === "cod" ? "Cash on Delivery" : 
+                               order.payment_method || "N/A"}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Customer Details */}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-500 mb-2">
+                          Customer Details
+                        </h4>
+                        <div className="space-y-2">
+                          <p className="text-sm">
+                            <span className="text-gray-600">Name:</span>{" "}
+                            <span className="font-medium">
+                              {order.customer_name}
+                            </span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Email:</span>{" "}
+                            <span className="font-medium">{order.email}</span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Mobile:</span>{" "}
+                            <span className="font-medium">{order.mobile}</span>
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Address:</span>{" "}
+                            <span className="font-medium">
+                              {order.installation_address}
+                            </span>
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Payment Details */}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-500 mb-2">
+                          Payment Details
+                        </h4>
+                        <div className="space-y-2">
+                          <p className="text-sm">
+                            <span className="text-gray-600">Status:</span>{" "}
+                            <PaymentStatusBadge status={order.payment_status} />
+                          </p>
+                          <p className="text-sm">
+                            <span className="text-gray-600">Amount:</span>{" "}
+                            <span className="font-medium">
+                              {formatCurrency(order.total)}
+                            </span>
+                          </p>
+                          {order.payment?.payment_id && (
+                            <p className="text-sm">
+                              <span className="text-gray-600">Payment ID:</span>{" "}
+                              <span className="font-medium">
+                                {order.payment.payment_id}
+                              </span>
+                            </p>
+                          )}
+                          {order.payment?.paid_at && (
+                            <p className="text-sm">
+                              <span className="text-gray-600">Paid At:</span>{" "}
+                              <span className="font-medium">
+                                {order.payment.paid_at}
+                              </span>
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Items Summary */}
+                      <div>
+                        <h4 className="font-medium text-sm text-gray-500 mb-2">
+                          Items ({order.items.length})
+                        </h4>
+                        <div className="space-y-2 max-h-40 overflow-y-auto">
+                          {order.items.map((item, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <img
+                                src={item.image}
+                                alt={item.title}
+                                className="w-8 h-8 rounded-md object-cover"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm truncate">{item.title}</p>
+                                <p className="text-xs text-gray-500">
+                                  Qty: {item.quantity || 1} •{" "}
+                                  {formatCurrency(item.total)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="mt-6 pt-6 border-t border-gray-200">
+                      <div className="flex flex-wrap gap-3">
+                        <button
+                          onClick={() => viewOrderDetails(order.order_id)}
+                          className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-all hover:scale-105"
+                          style={{
+                            backgroundColor: colors.primary,
+                            color: colors.bgLight,
+                          }}
+                        >
+                          <Eye size={16} />
+                          View Full Order Details
+                        </button>
+
+                        {/* Invoice Button - Only show for paid orders */}
+                        {order.payment_status === "paid" && (
+                          <>
+                            <button
+                              onClick={() => handleViewInvoice(order)}
+                              className="flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                              style={{ color: colors.text }}
+                            >
+                              <FileText size={14} />
+                              View Invoice
+                            </button>
+
+                            <button
+                              onClick={() => handleViewInvoice(order)}
+                              className="flex items-center gap-2 px-4 py-2.5 text-sm border border-gray-200 rounded-lg hover:bg-gray-50 transition"
+                              style={{ color: colors.text }}
+                            >
+                              <Download size={14} />
+                              Download Invoice
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Empty State */}
+          {filteredOrders.length === 0 && !loading && (
+            <div
+              className="mt-12 flex flex-col items-center justify-center text-center py-12"
+              style={{ color: colors.muted }}
+            >
+              <Package size={64} className="mb-4 opacity-30" />
+              <h3
+                className="text-xl font-medium mb-2"
+                style={{ color: colors.text }}
+              >
+                {orders.length === 0 ? "No Orders Yet" : "No Orders Found"}
+              </h3>
+              <p className="max-w-md mx-auto mb-6">
+                {orders.length === 0
+                  ? "You haven't placed any orders yet. Start shopping to see your orders here!"
+                  : "No orders match your current filters. Try adjusting your search or filters."}
+              </p>
+              <div className="flex gap-3">
+                {orders.length === 0 ? (
+                  <button
+                    onClick={() => navigate("/products")}
+                    className="px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: colors.primary,
+                      color: colors.bgLight,
+                    }}
+                  >
+                    Browse Products
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedStatus("all");
+                    }}
+                    className="px-6 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+                    style={{
+                      backgroundColor: colors.primary,
+                      color: colors.bgLight,
+                    }}
+                  >
+                    Clear All Filters
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        
       </div>
 
-      {/* ================= FOOTER NOTE ================= */}
-      <div className="mt-8 text-center">
-        <p className="text-sm text-gray-500">
-          Need help with an order?{' '}
-          <button 
-            onClick={() => contactSupport('general')}
-            className="font-medium hover:underline"
-            style={{ color: colors.primary }}
-          >
-            Contact Customer Support
-          </button>
-        </p>
-      </div>
-    </div>
+      {/* ================= INVOICE GENERATOR MODAL ================= */}
+      <InvoiceGenerator
+        order={selectedOrderForInvoice}
+        onClose={handleCloseInvoice}
+        isOpen={showInvoiceModal}
+      />
+    </>
   );
 };
 

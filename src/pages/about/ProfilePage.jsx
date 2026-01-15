@@ -16,14 +16,16 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { api } from "../../utils/app";
+import PageLoader from "../../component/common/PageLoader";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  console.log(user);
+  const { logout } = useAuth(); // Only keep logout function from AuthContext
   
+  const [user, setUser] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [profileImage, setProfileImage] = useState(null);
   const [imagePreview, setImagePreview] = useState("");
   const [formData, setFormData] = useState({
@@ -37,20 +39,42 @@ const ProfilePage = () => {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // Initialize form data when user data loads
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        name: user.name || "",
-        email: user.email || "",
-        phone: user.phone || "",
-        address: user.address || "",
-        image: null,
-        image_alt: user.image_alt || ""
-      });
-      setImagePreview(user.image_url || "");
+  // Fetch user data from API
+  const fetchUserData = async () => {
+    try {
+      setFetching(true);
+      const response = await api.get('/profile');
+      
+      if (response.data?.success) {
+        const userData = response.data.data;
+        setUser(userData);
+        
+        // Initialize form data
+        setFormData({
+          name: userData.name || "",
+          email: userData.email || "",
+          phone: userData.phone || "",
+          address: userData.address || "",
+          image: null,
+          image_alt: userData.image_alt || ""
+        });
+        
+        // Set image preview
+        setImagePreview(userData.image_url || "");
+      } else {
+        setError("Failed to load profile data");
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setError(error.response?.data?.message || "Failed to load profile data");
+    } finally {
+      setFetching(false);
     }
-  }, [user]);
+  };
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -118,22 +142,18 @@ const ProfilePage = () => {
         }
       });
 
-
-      // Add _method for Laravel to handle PUT via POST
-      formDataToSend.append('_method', 'POST');
-
       const response = await api.post(`/user/profile-update`, formDataToSend, {
         headers: {
           'Content-Type': 'multipart/form-data',
         }
       });
-      console.log("Profile update response:", response);
+      
       if (response.data.success) {
         setSuccess("Profile updated successfully!");
         setIsEditing(false);
         
-        // Refresh user data in context if needed
-        // You might want to update your auth context here
+        // Refresh user data after successful update
+        fetchUserData();
         
         // Auto-clear success message
         setTimeout(() => {
@@ -170,12 +190,38 @@ const ProfilePage = () => {
     }
   };
 
+  const resetForm = () => {
+    if (user) {
+      setFormData({
+        name: user.name || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        address: user.address || "",
+        image: null,
+        image_alt: user.image_alt || ""
+      });
+      setImagePreview(user.image_url || "");
+    }
+    setIsEditing(false);
+    setError("");
+  };
+
+  if (fetching) {
+    return <PageLoader />;
+  }
+
   if (!user) {
     return (
       <div className="min-h-screen bg-[#0A1A2F] text-white flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin mx-auto text-green-400 mb-4" />
-          <p className="text-gray-400">Loading profile...</p>
+          <User className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <p className="text-gray-400">Failed to load profile data</p>
+          <button
+            onClick={fetchUserData}
+            className="mt-4 px-6 py-2 rounded-lg bg-green-500 hover:bg-green-600 transition-colors"
+          >
+            Retry
+          </button>
         </div>
       </div>
     );
@@ -224,6 +270,10 @@ const ProfilePage = () => {
                       src={imagePreview} 
                       alt={formData.name} 
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=10b981&color=fff&size=96`;
+                      }}
                     />
                   ) : (
                     <span className="text-3xl font-bold">
@@ -246,30 +296,27 @@ const ProfilePage = () => {
               </div>
 
               <h2 className="text-xl font-semibold">{formData.name}</h2>
-              <p className="text-gray-400 text-sm">{user.role}</p>
+              <p className="text-gray-400 text-sm capitalize">{user.role}</p>
 
               <span className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 text-green-400 text-sm font-semibold">
                 <ShieldCheck className="w-4 h-4" />
                 {user.email_verified_at ? "Verified Account" : "Unverified Account"}
               </span>
 
+              {/* Member Since */}
+              <div className="mt-4 text-sm text-gray-400">
+                <p>Member since: {new Date(user.created_at).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}</p>
+              </div>
+
               {/* Edit/Save Profile Button */}
               {isEditing ? (
                 <div className="flex gap-3 w-full mt-6">
                   <button
-                    onClick={() => {
-                      setIsEditing(false);
-                      setFormData({
-                        name: user.name || "",
-                        email: user.email || "",
-                        phone: user.phone || "",
-                        address: user.address || "",
-                        image: null,
-                        image_alt: user.image_alt || ""
-                      });
-                      setImagePreview(user.image_url || "");
-                      setError("");
-                    }}
+                    onClick={resetForm}
                     className="flex-1 px-6 py-3 rounded-xl font-semibold bg-gray-700 hover:bg-gray-600 transition-all flex items-center justify-center gap-2"
                   >
                     <X className="w-4 h-4" />
@@ -412,6 +459,7 @@ const ProfilePage = () => {
               </div>
             </div>
 
+            
             {/* Quick Actions */}
             <div className="grid sm:grid-cols-2 gap-6">
               <button

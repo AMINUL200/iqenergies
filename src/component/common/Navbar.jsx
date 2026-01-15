@@ -388,7 +388,7 @@ const Navbar = ({ toggleMenu }) => {
                     aria-expanded={userDropdownOpen}
                   >
                     {/* User Info */}
-                    <div className="text-left  hidden lg:flex">
+                    <div className="text-left flex items-center gap-2">
                       <div
                         className="w-12 h-12 rounded-full flex items-center justify-center border-2 mr-2"
                         style={{
@@ -396,12 +396,16 @@ const Navbar = ({ toggleMenu }) => {
                           backgroundColor: colors.primary + "20",
                         }}
                       >
-                        <UserCircle
-                          size={24}
-                          style={{ color: colors.primary }}
+                        <img
+                          src={
+                            user?.image_url ||
+                            "image/profile.jpeg"
+                          }
+                          alt="Profile"
+                          className="w-11 h-11 rounded-full object-cover"
                         />
                       </div>
-                      <div>
+                      <div className=" hidden lg:flex lg:flex-col lg:items-start">
                         <h3 className="font-semibold text-gray-900 ">
                           {user?.name}
                         </h3>
@@ -434,9 +438,9 @@ const Navbar = ({ toggleMenu }) => {
                         style={{ borderColor: colors.border }}
                       >
                         <div className="flex items-center gap-3">
-                          {user?.avatar ? (
+                          {user?.image_url ? (
                             <img
-                              src={user.avatar}
+                              src={user.image_url}
                               alt={user.name}
                               className="w-10 h-10 rounded-full object-cover"
                             />
@@ -569,9 +573,9 @@ const Navbar = ({ toggleMenu }) => {
                   aria-label="User menu"
                   aria-expanded={mobileUserDropdownOpen}
                 >
-                  {user?.avatar ? (
+                  {user?.image_url ? (
                     <img
-                      src={user?.avatar}
+                      src={user?.image_url}
                       alt={user?.name}
                       className="w-8 h-8 rounded-full object-cover border-2"
                       style={{ borderColor: colors.primary }}
@@ -603,9 +607,9 @@ const Navbar = ({ toggleMenu }) => {
                       style={{ borderColor: colors.border }}
                     >
                       <div className="flex items-center gap-3">
-                        {user?.avatar ? (
+                        {user?.image_url ? (
                           <img
-                            src={user?.avatar}
+                            src={user?.image_url}
                             alt={user?.name}
                             className="w-12 h-12 rounded-full object-cover"
                           />

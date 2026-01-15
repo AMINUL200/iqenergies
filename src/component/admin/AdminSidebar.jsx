@@ -224,7 +224,32 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       icon: <Settings className="w-5 h-5" />,
       path: "/admin/technical-support-handle",
     },
-    
+    {
+      id: "handle-orders",
+      label: "Handle Orders",
+      icon: <ShoppingCart className="w-5 h-5" />,
+      path: "/admin/handle-orders",
+    },
+    {
+      id: "handle-franchises",
+      label: "Handle Franchises",
+      icon: <Settings className="w-5 h-5" />,
+      // path: "/admin/handle-franchises",
+      children: [
+        {
+          id: "franchises",
+          label: "Franchises Management",
+          icon: <Clock className="w-4 h-4" />,
+          path: "/admin/handle-franchises",
+        },
+        {
+          id : "franchise-requests",
+          label : "Franchise Requests",
+          icon : <Clock className="w-4 h-4" />,
+          path : "/admin/franchise-requests",
+        }
+      ],
+    },
   ];
 
   const toggleDropdown = (id) => {

@@ -15,31 +15,32 @@ import {
   Mail,
   Building,
   MessageSquare,
+  Phone,
   Send
 } from "lucide-react";
+import { api } from "../../utils/app";
+import { toast } from "react-toastify";
 
 const SolarFranchise = () => {
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    full_name: "",
     email: "",
-    organization: "",
-    message: "",
+    phone: "",
+    company_name: "",
+    message: "Interested in franchise partnership",
   });
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
   const colors = {
-    // Landing Page Colors
     primary: "#4CAF50",
     secondary: "#0F766E",
     accent: "#F59E0B",
     background: "#F8FAFC",
     textPrimary: "#1F2933",
     textMuted: "#6B7280",
-
-    // Sun Energy Colors
     sunPrimary: "#F97316",
     sunSecondary: "#FACC15",
     sunAccent: "#DC2626",
@@ -98,8 +99,8 @@ const SolarFranchise = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Validate form
-    if (!formData.name || !formData.email || !formData.organization) {
+    // Validate required fields
+    if (!formData.full_name || !formData.email || !formData.phone || !formData.company_name) {
       alert("Please fill in all required fields");
       return;
     }
@@ -111,41 +112,83 @@ const SolarFranchise = () => {
       return;
     }
 
+    // Phone validation (Indian phone number)
+    const phoneRegex = /^[6-9]\d{9}$/;
+    if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+      alert("Please enter a valid 10-digit Indian phone number");
+      return;
+    }
+
     setSubmitting(true);
 
     try {
-      // Simulate API call - replace with your actual API endpoint
-      const response = await fetch('/api/franchise-application', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      // Prepare the data in the exact format you specified
+      const submissionData = {
+        full_name: formData.full_name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company_name: formData.company_name.trim(),
+        message: formData.message.trim() || "Interested in franchise partnership",
+        // source: "franchise_landing_page",
+        // submission_date: new Date().toISOString(),
+      };
 
-      if (response.ok) {
+      console.log("Submitting data:", submissionData);
+
+      // Replace this with your actual API endpoint
+      const response = await api.post('/franchise-application', submissionData);
+      
+
+      if (response.data.success) {
+        toast.success(response.data.message || "Application submitted successfully!");
         setSubmitted(true);
         
         // Reset form after successful submission
         setTimeout(() => {
           setFormData({
-            name: "",
+            full_name: "",
             email: "",
-            organization: "",
-            message: "",
+            phone: "",
+            company_name: "",
+            message: "Interested in franchise partnership",
           });
           setSubmitted(false);
           setShowPopup(false);
-        }, 2000);
+        }, 3000);
       } else {
-        throw new Error('Submission failed');
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Server responded with status: ${response.status}`);
       }
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Failed to submit application. Please try again.');
+      alert(`Failed to submit application: ${error.message}. Please try again or contact us directly.`);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Format phone number as user types
+  const handlePhoneChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    // Limit to 10 digits
+    if (value.length > 10) {
+      value = value.substring(0, 10);
+    }
+    
+    // Format with spaces for better readability
+    if (value.length > 6) {
+      value = `${value.substring(0, 5)} ${value.substring(5, 10)}`;
+    } else if (value.length > 5) {
+      value = `${value.substring(0, 5)} ${value.substring(5)}`;
+    } else if (value.length > 2) {
+      value = `${value.substring(0, 2)} ${value.substring(2)}`;
+    }
+    
+    setFormData((prev) => ({
+      ...prev,
+      phone: value,
+    }));
   };
 
   return (
@@ -170,10 +213,10 @@ const SolarFranchise = () => {
                   </div>
                   <div>
                     <h2 className="text-2xl font-bold text-white">
-                      Franchise Application
+                      IQEnergies Franchise Application
                     </h2>
                     <p className="text-green-100 mt-1">
-                      Fill the form below to get started
+                      Join India's leading solar franchise network
                     </p>
                   </div>
                 </div>
@@ -199,7 +242,7 @@ const SolarFranchise = () => {
                       Application Submitted Successfully!
                     </h3>
                     <p className="text-green-600 text-sm mt-1">
-                      Our team will contact you within 24 hours.
+                      Our franchise team will contact you within 24 hours.
                     </p>
                   </div>
                 </div>
@@ -210,7 +253,7 @@ const SolarFranchise = () => {
             <div className="p-6 max-h-[70vh] overflow-y-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid md:grid-cols-2 gap-6">
-                  {/* Name Field */}
+                  {/* Full Name Field */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       <div className="flex items-center gap-2">
@@ -220,8 +263,8 @@ const SolarFranchise = () => {
                     </label>
                     <input
                       type="text"
-                      name="name"
-                      value={formData.name}
+                      name="full_name"
+                      value={formData.full_name}
                       onChange={handleInputChange}
                       required
                       disabled={submitting}
@@ -251,24 +294,47 @@ const SolarFranchise = () => {
                   </div>
                 </div>
 
-                {/* Organization Field */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <div className="flex items-center gap-2">
-                      <Building className="w-4 h-4" />
-                      Organization / Company Name *
-                    </div>
-                  </label>
-                  <input
-                    type="text"
-                    name="organization"
-                    value={formData.organization}
-                    onChange={handleInputChange}
-                    required
-                    disabled={submitting}
-                    className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Enter your organization name"
-                  />
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Phone Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        Phone Number *
+                      </div>
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handlePhoneChange}
+                      required
+                      disabled={submitting}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="98 7654 3210"
+                      maxLength="12"
+                    />
+                  </div>
+
+                  {/* Company Field */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <div className="flex items-center gap-2">
+                        <Building className="w-4 h-4" />
+                        Company Name *
+                      </div>
+                    </label>
+                    <input
+                      type="text"
+                      name="company_name"
+                      value={formData.company_name}
+                      onChange={handleInputChange}
+                      required
+                      disabled={submitting}
+                      className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="Enter your company name"
+                    />
+                  </div>
                 </div>
 
                 {/* Message Field */}
@@ -276,10 +342,10 @@ const SolarFranchise = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <MessageSquare className="w-4 h-4" />
-                      Additional Message (Optional)
+                      Additional Message
                     </div>
                     <span className="text-sm text-gray-500 font-normal">
-                      Tell us about your experience or specific interests
+                      Tell us about your experience or specific interests in solar energy
                     </span>
                   </label>
                   <textarea
@@ -289,7 +355,7 @@ const SolarFranchise = () => {
                     rows={4}
                     disabled={submitting}
                     className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-green-500 focus:ring-2 focus:ring-green-500/20 outline-none transition-all resize-none disabled:opacity-50 disabled:cursor-not-allowed"
-                    placeholder="Any specific requirements or questions you have..."
+                    placeholder="Interested in franchise partnership..."
                   />
                 </div>
 
@@ -298,7 +364,7 @@ const SolarFranchise = () => {
                   <button
                     type="submit"
                     disabled={submitting || submitted}
-                    className="group flex items-center justify-center gap-3 px-6 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="group flex items-center justify-center gap-3 px-8 py-3 rounded-lg font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{
                       background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`,
                       color: "#FFFFFF",
@@ -326,7 +392,7 @@ const SolarFranchise = () => {
                     type="button"
                     onClick={() => !submitting && setShowPopup(false)}
                     disabled={submitting}
-                    className="px-6 py-3 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-8 py-3 rounded-lg font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancel
                   </button>
@@ -470,7 +536,6 @@ const SolarFranchise = () => {
                             <Play className="w-8 h-8 text-white ml-1" />
                           </div>
                         </button>
-                        
                       </div>
 
                       {/* Video Title */}

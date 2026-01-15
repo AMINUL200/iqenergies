@@ -14,6 +14,7 @@ export const useLandingData = () => {
     business: null,
     services: null,
     product: null,
+    booking: null
   });
 
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,7 @@ export const useLandingData = () => {
         business: api.get(`${API_URL}/business-verticals`),
         services: api.get(`${API_URL}/services`),
         product: api.get(`${API_URL}/show-products`),
+        booking: api.get(`${API_URL}/settings-all`),
       };
 
       const results = await Promise.allSettled(

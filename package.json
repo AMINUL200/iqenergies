@@ -12,8 +12,10 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
+    "html2canvas": "^1.4.1",
     "html2pdf.js": "^0.14.0",
     "jodit-react": "^5.2.38",
+    "jspdf": "^4.0.0",
     "lucide-react": "^0.553.0",
     "react": "^19.1.1",
     "react-data-table-component": "^7.7.0",

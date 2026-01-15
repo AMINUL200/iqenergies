@@ -126,7 +126,7 @@ const LandingPage = () => {
       </section>
 
       {/* contact us section */}
-      <ContactUsSection />
+      <ContactUsSection contactInfo={data.booking} />
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Mail, Lock, LogIn, ArrowLeft } from "lucide-react";
 import CustomInput from "../../component/form/CustomInput";
 import { toast } from "react-toastify";
@@ -169,12 +169,12 @@ const LoginPage = () => {
                 <span className="ml-2">Remember me</span>
               </label>
 
-              <a
-                href="/forgot-password"
+              <Link
+                to="/forgot-password"
                 className="text-sm font-semibold text-[#0F766E] hover:text-[#4CAF50]"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
 
             {/* Submit */}

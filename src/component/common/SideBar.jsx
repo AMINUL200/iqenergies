@@ -18,6 +18,7 @@ const SideBar = ({ toggleMenu, isOpen }) => {
     { id: "home", label: "Home", type: "route", path: "/", icon: <Home size={20} /> },
     { id: "about", label: "About Us", type: "scroll", sectionId: "about", icon: <Info size={20} /> },
     { id: "solutions", label: "Solutions", type: "scroll", sectionId: "solutions", icon: <Layers size={20} /> },
+    { id: "franchise", label: "Franchise", type: "scroll", sectionId: "franchise", icon: <Layers size={20} /> },
     { id: "services", label: "Services", type: "scroll", sectionId: "services", icon: <Briefcase size={20} /> },
     { id: "products", label: "Products", type: "scroll", sectionId: "products", icon: <Package size={20} /> },
   ];

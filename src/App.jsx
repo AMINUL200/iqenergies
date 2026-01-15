@@ -52,14 +52,33 @@ import HandlePaymentGatWay from "./pages/admin/payment/HandlePaymentGatWay";
 import HandleTechnicalSupport from "./pages/suport/HandleTechnicalSupport";
 import HandleSEOMaster from "./pages/admin/setting/HandleSEOMaster";
 import HandleBookingSurvey from "./pages/suport/HandleBookingSurvey";
+import ResetPassword from "./pages/auth/ResetPassword";
+import { ToastContainer } from 'react-toastify';
+import HandleOrder from "./pages/admin/product/HandleOrder";
+import HandleOrdersDetails from "./pages/admin/product/HandleOrdersDetails";
+import HandleFranchises from "./pages/admin/franchises/HandleFranchises";
+import HandleFranchiseRequests from "./pages/admin/franchises/HandleFranchiseRequests";
 
 const App = () => {
   return (
     <Router>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        zIndex={9999} 
+       />
       <Routes>
         {/* ---------- LOGIN / REGISTER ---------- */}
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ResetPassword />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
 
@@ -84,7 +103,7 @@ const App = () => {
           <Route element={<AppLayout />}>
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/orders" element={<MyOrderPage />} />
-            <Route path="/orders/:slug" element={<OrderTrackingPage />} />
+            <Route path="/orders/:orderId" element={<OrderTrackingPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/order-success" element={<OrderSuccessPage />} />
             {/* <Route path="/customer-support" element={<CustomerSupport />} /> */}
@@ -171,6 +190,14 @@ const App = () => {
               element={<HandleTechnicalSupport />}
             />
             <Route path="booking-survey" element={<HandleBookingSurvey />} />
+
+            <Route path="handle-orders" element={<HandleOrder />} />
+            <Route path="orders/:id" element={<HandleOrdersDetails />} />
+
+            <Route path="handle-franchises" element={<HandleFranchises />} />
+            <Route path="franchise-requests" element={<HandleFranchiseRequests />} />
+
+
           </Route>
         </Route>
       </Routes>
