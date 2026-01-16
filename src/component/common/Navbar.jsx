@@ -21,11 +21,12 @@ import {
   CreditCard,
   Shield,
   Bell,
+  Instagram,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { getCartCount } from "../../utils/cart";
 
-const Navbar = ({ toggleMenu }) => {
+const Navbar = ({ toggleMenu, contactInfo = {} }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -242,24 +243,45 @@ const Navbar = ({ toggleMenu }) => {
           <div className="flex items-center gap-2 md:gap-4">
             <span className="flex items-center gap-1 whitespace-nowrap">
               <Phone size={12} />
-              <span className="hidden sm:inline">+91 98765 43210</span>
-              <span className="sm:hidden">+91 9876543210</span>
+              <span className="hidden sm:inline">
+                {contactInfo?.phone || "+91 98765 43210"}
+              </span>
+              <span className="sm:hidden">
+                {(contactInfo?.phone || "").replace(/\s/g, "")}
+              </span>
             </span>
-            <span className="hidden md:flex items-center gap-1">
-              <Mail size={12} /> info@iqenergies.com
-            </span>
+
+            {contactInfo?.email && (
+              <span className="hidden md:flex items-center gap-1">
+                <Mail size={12} /> {contactInfo?.email}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:gap-4">
             <div className="flex items-center gap-2 md:gap-4">
-              {[Facebook, Twitter, Linkedin].map((Icon, i) => (
-                <Icon
-                  key={i}
-                  size={14}
-                  className="cursor-pointer hover:opacity-80 transition hover:scale-110"
-                />
-              ))}
+              {contactInfo?.fb && (
+                <a href={contactInfo?.fb} target="_blank" rel="noopener noreferrer">
+                  <Facebook size={14} className="hover:scale-110 transition" />
+                </a>
+              )}
+              {contactInfo?.twitter && (
+                <a href={contactInfo?.twitter} target="_blank" rel="noopener noreferrer">
+                  <Twitter size={14} className="hover:scale-110 transition" />
+                </a>
+              )}
+              {contactInfo?.linkedin && (
+                <a href={contactInfo?.linkedin} target="_blank" rel="noopener noreferrer">
+                  <Linkedin size={14} className="hover:scale-110 transition" />
+                </a>
+              )}
+              {contactInfo?.instagram && (
+                <a href={contactInfo?.instagram} target="_blank" rel="noopener noreferrer">
+                  <Instagram size={14} className="hover:scale-110 transition" />
+                </a>
+              )}
             </div>
+
             <button
               onClick={toggleDarkMode}
               className="ml-2 p-1 rounded-full hover:bg-white/10 transition"
@@ -292,7 +314,7 @@ const Navbar = ({ toggleMenu }) => {
             onClick={() => navigate("/")}
           >
             <img
-              src="/image/logo.png"
+              src={contactInfo?.com_web_logo_url || "/image/logo.png"}
               alt="IQEnergies"
               className="w-16 h-12 md:w-20 md:h-16 transition-transform hover:scale-105"
             />
@@ -397,10 +419,7 @@ const Navbar = ({ toggleMenu }) => {
                         }}
                       >
                         <img
-                          src={
-                            user?.image_url ||
-                            "image/profile.jpeg"
-                          }
+                          src={user?.image_url || "image/profile.jpeg"}
                           alt="Profile"
                           className="w-11 h-11 rounded-full object-cover"
                         />

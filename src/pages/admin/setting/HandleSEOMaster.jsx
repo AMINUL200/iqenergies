@@ -17,7 +17,14 @@ import {
   Award,
   Layout,
   Type,
-  X
+  X,
+  Facebook,
+  Twitter,
+  Linkedin,
+  Instagram,
+  Mail,
+  Phone,
+  PhoneCall
 } from 'lucide-react';
 import { api } from '../../../utils/app';
 
@@ -34,7 +41,11 @@ const HandleSEOMaster = () => {
     danger: '#DC2626',
     warning: '#D97706',
     success: '#059669',
-    info: '#2563EB'
+    info: '#2563EB',
+    facebook: '#1877F2',
+    twitter: '#1DA1F2',
+    linkedin: '#0A66C2',
+    instagram: '#E4405F'
   };
 
   // States
@@ -70,6 +81,15 @@ const HandleSEOMaster = () => {
     robots: '',
     meta_charset: '',
     meta_view_port: '',
+    // Social media fields
+    fb: '',
+    twitter: '',
+    linkedin: '',
+    instagram: '',
+    // Contact fields
+    email: '',
+    phone: '',
+    landline: '',
     // Store files separately from preview URLs
     com_web_logo_file: null,
     com_mobile_logo_file: null,
@@ -104,6 +124,16 @@ const HandleSEOMaster = () => {
           robots: data.robots || '',
           meta_charset: data.meta_charset || '',
           meta_view_port: data.meta_view_port || '',
+          // Social media fields
+          fb: data.fb || '',
+          twitter: data.twitter || '',
+          linkedin: data.linkedin || '',
+          instagram: data.instagram || '',
+          // Contact fields
+          email: data.email || '',
+          phone: data.phone || '',
+          landline: data.landline || '',
+          // File fields
           com_web_logo_file: null,
           com_mobile_logo_file: null,
           brochure_image_file: null,
@@ -226,7 +256,9 @@ const HandleSEOMaster = () => {
       const textFields = [
         'com_name', 'logo_alt', 'brochure_alt', 'cirtificate_alt',
         'footer_title', 'meta_tag', 'meta_description', 'meta_keywords',
-        'canonical', 'robots', 'meta_charset', 'meta_view_port'
+        'canonical', 'robots', 'meta_charset', 'meta_view_port',
+        'fb', 'twitter', 'linkedin', 'instagram',
+        'email', 'phone', 'landline'
       ];
       
       textFields.forEach(field => {
@@ -323,7 +355,7 @@ const HandleSEOMaster = () => {
                 SEO Master Configuration
               </h1>
               <p className="text-lg" style={{ color: colors.mediumGray }}>
-                Manage your website's SEO settings and metadata
+                Manage your website's SEO, social media, and contact settings
               </p>
             </div>
             
@@ -346,10 +378,11 @@ const HandleSEOMaster = () => {
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Form */}
-          <div className="lg:col-span-2">
-            <div className="space-y-8">
+          <div className="lg:col-span-2 min-h-screen">
+           <div className="space-y-10">
               {/* Company Information Card */}
               <div className="bg-white rounded-xl border p-6" style={{ borderColor: colors.lightGray }}>
+                
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.primaryBlack}10` }}>
                     <Settings className="w-5 h-5" style={{ color: colors.primaryBlack }} />
@@ -395,6 +428,188 @@ const HandleSEOMaster = () => {
                         color: colors.primaryBlack
                       }}
                       placeholder="Enter footer description"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information Card */}
+              <div className="bg-white rounded-xl border p-6" style={{ borderColor: colors.lightGray }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.success}10` }}>
+                    <Phone className="w-5 h-5" style={{ color: colors.success }} />
+                  </div>
+                  <h2 className="text-xl font-semibold" style={{ color: colors.primaryBlack }}>
+                    Contact Information
+                  </h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4" />
+                        Email Address
+                      </div>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="contact@company.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Phone className="w-4 h-4" />
+                        Mobile Phone
+                      </div>
+                    </label>
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="+91 98765 43210"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <PhoneCall className="w-4 h-4" />
+                        Landline Phone
+                      </div>
+                    </label>
+                    <input
+                      type="tel"
+                      name="landline"
+                      value={formData.landline}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="033 1234 5678"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media Links Card */}
+              <div className="bg-white rounded-xl border p-6" style={{ borderColor: colors.lightGray }}>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-lg" style={{ backgroundColor: `${colors.facebook}10` }}>
+                    <Facebook className="w-5 h-5" style={{ color: colors.facebook }} />
+                  </div>
+                  <h2 className="text-xl font-semibold" style={{ color: colors.primaryBlack }}>
+                    Social Media Links
+                  </h2>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Facebook className="w-4 h-4" style={{ color: colors.facebook }} />
+                        Facebook URL
+                      </div>
+                    </label>
+                    <input
+                      type="url"
+                      name="fb"
+                      value={formData.fb}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="https://facebook.com/company"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Twitter className="w-4 h-4" style={{ color: colors.twitter }} />
+                        Twitter URL
+                      </div>
+                    </label>
+                    <input
+                      type="url"
+                      name="twitter"
+                      value={formData.twitter}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="https://twitter.com/company"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Linkedin className="w-4 h-4" style={{ color: colors.linkedin }} />
+                        LinkedIn URL
+                      </div>
+                    </label>
+                    <input
+                      type="url"
+                      name="linkedin"
+                      value={formData.linkedin}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="https://linkedin.com/company"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: colors.primaryBlack }}>
+                      <div className="flex items-center gap-2">
+                        <Instagram className="w-4 h-4" style={{ color: colors.instagram }} />
+                        Instagram URL
+                      </div>
+                    </label>
+                    <input
+                      type="url"
+                      name="instagram"
+                      value={formData.instagram}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:outline-none transition-all"
+                      style={{ 
+                        borderColor: colors.lightGray,
+                        backgroundColor: colors.softBackground,
+                        color: colors.primaryBlack
+                      }}
+                      placeholder="https://instagram.com/company"
                     />
                   </div>
                 </div>
@@ -719,6 +934,63 @@ const HandleSEOMaster = () => {
                       {formatDate(seoData?.created_at)}
                     </p>
                   </div>
+
+                  {/* Social Media Preview */}
+                  {formData.fb || formData.twitter || formData.linkedin || formData.instagram ? (
+                    <div className="pt-4 border-t" style={{ borderColor: colors.lightGray }}>
+                      <p className="text-sm mb-2" style={{ color: colors.mediumGray }}>Social Links</p>
+                      <div className="flex gap-2">
+                        {formData.fb && (
+                          <a 
+                            href={formData.fb} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                            style={{ color: colors.facebook }}
+                            title="Facebook"
+                          >
+                            <Facebook className="w-4 h-4" />
+                          </a>
+                        )}
+                        {formData.twitter && (
+                          <a 
+                            href={formData.twitter} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                            style={{ color: colors.twitter }}
+                            title="Twitter"
+                          >
+                            <Twitter className="w-4 h-4" />
+                          </a>
+                        )}
+                        {formData.linkedin && (
+                          <a 
+                            href={formData.linkedin} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                            style={{ color: colors.linkedin }}
+                            title="LinkedIn"
+                          >
+                            <Linkedin className="w-4 h-4" />
+                          </a>
+                        )}
+                        {formData.instagram && (
+                          <a 
+                            href={formData.instagram} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 rounded-lg hover:bg-pink-50 transition-colors"
+                            style={{ color: colors.instagram }}
+                            title="Instagram"
+                          >
+                            <Instagram className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="pt-4 border-t" style={{ borderColor: colors.lightGray }}>
                     <button

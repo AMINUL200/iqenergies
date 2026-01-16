@@ -94,7 +94,7 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar toggleMenu={toggleSidebar} />
+      <Navbar toggleMenu={toggleSidebar} contactInfo={appData.contactInfo} />
       <SideBar toggleMenu={toggleSidebar} isOpen={sidebarOpen} />
       <Outlet />
       <BackToTop />
