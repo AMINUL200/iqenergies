@@ -96,7 +96,7 @@ const HeroSection = ({ heroData = [] }) => {
   const IconComponent = slide.icon;
 
   return (
-    <section className="relative min-h-screen w-full overflow-hidden bg-black ">
+    <section className="relative min-h-[60vh] md:min-h-screen w-full overflow-hidden bg-black">
       {/* Animated Background */}
       <div className="absolute inset-0">
         {slides.map((s, idx) => (
@@ -140,7 +140,7 @@ const HeroSection = ({ heroData = [] }) => {
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 h-screen flex items-center">
+      <div className="relative z-10 h-[65vh] md:h-screen flex items-center">
         <div className="max-w-7xl mx-auto px-6 w-full">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
