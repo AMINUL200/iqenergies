@@ -112,7 +112,7 @@ const LandingPage = () => {
 
       {/* solar inverter section */}
       {/* <SolarInverterSection /> */}
-      <SolarFranchise/>
+      <SolarFranchise franchiseInfo={data.franchise} />
 
       <section>
         <div className="relative bg-white text-white py-8 md:py-10 overflow-hidden"></div>

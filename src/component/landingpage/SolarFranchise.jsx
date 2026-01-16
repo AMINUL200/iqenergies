@@ -16,12 +16,15 @@ import {
   Building,
   MessageSquare,
   Phone,
-  Send
+  Send,
 } from "lucide-react";
 import { api } from "../../utils/app";
 import { toast } from "react-toastify";
 
-const SolarFranchise = () => {
+const SolarFranchise = ({ franchiseInfo = {} }) => {
+  const { tagline, title, highlighted_text, description, video_url, pdf_url } =
+    franchiseInfo || {};
+
   const [videoPlaying, setVideoPlaying] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
   const [formData, setFormData] = useState({
@@ -98,9 +101,14 @@ const SolarFranchise = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
-    if (!formData.full_name || !formData.email || !formData.phone || !formData.company_name) {
+    if (
+      !formData.full_name ||
+      !formData.email ||
+      !formData.phone ||
+      !formData.company_name
+    ) {
       alert("Please fill in all required fields");
       return;
     }
@@ -114,7 +122,7 @@ const SolarFranchise = () => {
 
     // Phone validation (Indian phone number)
     const phoneRegex = /^[6-9]\d{9}$/;
-    if (!phoneRegex.test(formData.phone.replace(/\D/g, ''))) {
+    if (!phoneRegex.test(formData.phone.replace(/\D/g, ""))) {
       alert("Please enter a valid 10-digit Indian phone number");
       return;
     }
@@ -128,7 +136,8 @@ const SolarFranchise = () => {
         email: formData.email.trim(),
         phone: formData.phone.trim(),
         company_name: formData.company_name.trim(),
-        message: formData.message.trim() || "Interested in franchise partnership",
+        message:
+          formData.message.trim() || "Interested in franchise partnership",
         // source: "franchise_landing_page",
         // submission_date: new Date().toISOString(),
       };
@@ -136,13 +145,14 @@ const SolarFranchise = () => {
       console.log("Submitting data:", submissionData);
 
       // Replace this with your actual API endpoint
-      const response = await api.post('/franchise-application', submissionData);
-      
+      const response = await api.post("/franchise-application", submissionData);
 
       if (response.data.success) {
-        toast.success(response.data.message || "Application submitted successfully!");
+        toast.success(
+          response.data.message || "Application submitted successfully!"
+        );
         setSubmitted(true);
-        
+
         // Reset form after successful submission
         setTimeout(() => {
           setFormData({
@@ -157,11 +167,16 @@ const SolarFranchise = () => {
         }, 3000);
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || `Server responded with status: ${response.status}`);
+        throw new Error(
+          errorData.message ||
+            `Server responded with status: ${response.status}`
+        );
       }
     } catch (error) {
-      console.error('Error submitting form:', error);
-      alert(`Failed to submit application: ${error.message}. Please try again or contact us directly.`);
+      console.error("Error submitting form:", error);
+      alert(
+        `Failed to submit application: ${error.message}. Please try again or contact us directly.`
+      );
     } finally {
       setSubmitting(false);
     }
@@ -169,13 +184,13 @@ const SolarFranchise = () => {
 
   // Format phone number as user types
   const handlePhoneChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '');
-    
+    let value = e.target.value.replace(/\D/g, "");
+
     // Limit to 10 digits
     if (value.length > 10) {
       value = value.substring(0, 10);
     }
-    
+
     // Format with spaces for better readability
     if (value.length > 6) {
       value = `${value.substring(0, 5)} ${value.substring(5, 10)}`;
@@ -184,7 +199,7 @@ const SolarFranchise = () => {
     } else if (value.length > 2) {
       value = `${value.substring(0, 2)} ${value.substring(2)}`;
     }
-    
+
     setFormData((prev) => ({
       ...prev,
       phone: value,
@@ -197,11 +212,11 @@ const SolarFranchise = () => {
       {showPopup && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div 
+          <div
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => !submitting && setShowPopup(false)}
           ></div>
-          
+
           {/* Modal Content */}
           <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
             {/* Modal Header */}
@@ -345,7 +360,8 @@ const SolarFranchise = () => {
                       Additional Message
                     </div>
                     <span className="text-sm text-gray-500 font-normal">
-                      Tell us about your experience or specific interests in solar energy
+                      Tell us about your experience or specific interests in
+                      solar energy
                     </span>
                   </label>
                   <textarea
@@ -402,8 +418,9 @@ const SolarFranchise = () => {
               {/* Privacy Note */}
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <p className="text-sm text-gray-500 text-center">
-                  By submitting this form, you agree to our Privacy Policy. 
-                  Your information is secure and will only be used for franchise inquiry purposes.
+                  By submitting this form, you agree to our Privacy Policy. Your
+                  information is secure and will only be used for franchise
+                  inquiry purposes.
                 </p>
               </div>
             </div>
@@ -438,44 +455,28 @@ const SolarFranchise = () => {
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/20 border border-green-500/30 backdrop-blur-sm">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                   <span className="text-sm font-semibold text-green-400 tracking-wide">
-                    Limited Franchise Opportunities
+                    {tagline || "Limited Franchise Opportunities"}
                   </span>
                 </div>
 
                 {/* Main Heading */}
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  <span className="block" style={{ color: "#FFF" }}>
-                    Own Your Solar
+                  <span className="block text-white">
+                    {title || "Own Your Solar"}
                   </span>
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-green-600">
-                    Energy Business
+                    {highlighted_text || "Energy Business"}
                   </span>
                 </h1>
 
                 {/* Description */}
-                <p
-                  className="text-lg md:text-xl leading-relaxed"
-                  style={{ color: "#CBD5E1" }}
-                >
-                  Join India's fastest growing solar franchise network. Be part
-                  of the renewable energy revolution with comprehensive support,
-                  proven business model, and sustainable growth opportunities.
-                </p>
-
-                {/* Features List */}
-                <div className="space-y-3">
-                  {franchiseFeatures.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <CheckCircle
-                        className="w-5 h-5"
-                        style={{ color: colors.primary }}
-                      />
-                      <span className="text-lg" style={{ color: "#E5E7EB" }}>
-                        {feature}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {/* Dynamic Description + Features (from Admin Editor) */}
+                <div
+                  className="prose prose-invert max-w-none editor-content"
+                  dangerouslySetInnerHTML={{
+                    __html: description || "",
+                  }}
+                />
 
                 {/* CTA Buttons */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-6">
@@ -492,16 +493,26 @@ const SolarFranchise = () => {
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button
-                    onClick={() => console.log("Download Brochure")}
+                    onClick={() => window.open(pdf_url, "_blank")}
                     className="group flex items-center justify-center gap-3 px-8 py-4 rounded-xl font-semibold border-2 transition-all hover:bg-white/10"
                     style={{
                       borderColor: colors.accent,
-                      color: '#FFFFFF'
+                      color: "#FFFFFF",
                     }}
                   >
                     Download Brochure
-                    <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    <svg
+                      className="w-5 h-5 group-hover:animate-bounce"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -517,7 +528,8 @@ const SolarFranchise = () => {
                   }}
                 >
                   {/* Placeholder/Thumbnail */}
-                  {!videoPlaying ? (
+                  {!videoPlaying || !video_url ? (
+                    /* Thumbnail */
                     <div className="relative">
                       <img
                         src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80"
@@ -552,20 +564,14 @@ const SolarFranchise = () => {
                       </div>
                     </div>
                   ) : (
-                    // Video Player
-                    <div className="w-full h-[400px] md:h-[500px] bg-black">
-                      <iframe
-                        width="100%"
-                        height="100%"
-                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
-                        title="Solar Franchise Success Story"
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="rounded-2xl"
-                      ></iframe>
-                    </div>
-                  )}
+                    /* Video Player (REAL VIDEO FROM BACKEND) */
+                    <video
+                      src={video_url}
+                      controls
+                      autoPlay
+                      className="w-full h-[400px] md:h-[500px] object-cover rounded-2xl bg-black"
+                    />
+                  )}<br />
                 </div>
               </div>
             </div>

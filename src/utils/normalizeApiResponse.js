@@ -25,6 +25,8 @@ export const normalizeApiResponse = (key, response) => {
       return raw?.data || null;
     case "booking":
       return raw?.data || null;
+    case "franchise":
+      return raw?.data || null;
 
     default:
       return raw?.data || raw || null;

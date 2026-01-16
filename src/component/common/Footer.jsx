@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const Footer = () => {
+const Footer = ({ footerInfo = {} }) => {
   const navigate = useNavigate();
   return (
     <footer
@@ -16,8 +16,8 @@ const Footer = () => {
           <div className="space-y-6">
             <div className="text-center md:text-start">
               <img
-                src="/image/logo.png"
-                alt="IQ Energies"
+                src={footerInfo.com_web_logo_url || "/image/logo.png"}
+                alt={footerInfo.logo_alt || "IQ Energies Logo"}
                 className="w-28  mx-auto md:mx-0 object-contain"
               />
               <p>
@@ -30,8 +30,8 @@ const Footer = () => {
               className="text-base leading-relaxed max-w-sm"
               style={{ color: "#1F2933" }}
             >
-              IQ Energies Providing Sustainable Solar, Hybrid, and EV Solutions
-              for a Greener Future.
+              {footerInfo.footer_title ||
+                "Leading the way in renewable energy solutions for a sustainable future."}
             </p>
 
             {/* Customer Support Link - Simple addition */}
@@ -46,13 +46,13 @@ const Footer = () => {
 
           {/* ================= CENTER: BROCHURE QR ================= */}
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold" style={{ color: "#0F766E" }}>
+            <h3 className="text-lg font-semibold" style={{ color: "#0F766E" }} alt={footerInfo.brochure_alt || "Download Brochure QR"}>
               Download Our Brochure
             </h3>
 
             <div className="bg-white p-4 inline-block shadow-md">
               <img
-                src="/image/brochure-qr.png"
+                src={footerInfo.brochure_image_url || "/image/brochure-qr.png"}
                 alt="Download Brochure QR"
                 className="w-44 h-44 object-contain"
               />
@@ -78,7 +78,7 @@ const Footer = () => {
 
             <div className="bg-white p-4 inline-block shadow-md">
               <img
-                src="/image/certificate-qr.png"
+                src={footerInfo.cirtificate_image_url || "/image/certificate-qr.png"}
                 alt="Certificate QR"
                 className="w-44 h-44 object-contain"
               />

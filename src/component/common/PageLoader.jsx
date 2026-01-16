@@ -121,7 +121,7 @@ const PageLoader = ({ energyType = "brand" }) => {
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center"
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-start md:justify-center"
       style={{
         background: colors.background,
         backgroundImage: `radial-gradient(circle at 20% 80%, ${colors.primary}15 0%, transparent 50%),
@@ -163,13 +163,15 @@ const PageLoader = ({ energyType = "brand" }) => {
 
               {/* Theme Badge */}
               <div
-                className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-xs font-semibold shadow-md"
-                style={{
-                  backgroundColor: colors.accent,
-                  color: "white",
-                }}
+                className="absolute -bottom-2 -right-2 px-3 py-1 rounded-full text-xs font-semibold shadow-md flex gap-1"
+                  style={{ backgroundColor: "#111827" }} 
               >
-                {colors.name}
+                <span style={{ color: "#FB923C" }}>Sun.</span> 
+                {/* deep orange */}
+                <span style={{ color: "#F9FAFB" }}>Wind.</span>{" "}
+                {/* pure white */}
+                <span style={{ color: "#0284C7" }}>Water.</span>{" "}
+                {/* deep blue */}
               </div>
             </div>
 

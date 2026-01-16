@@ -33,11 +33,7 @@ const AboutUsPage = () => {
         setFeaturesData(response.data.data.features);
         setCtaData(response.data.data.cta);
 
-        console.log("Hero Data:", response.data.data.hero);
-        console.log("Who We Are Data:", response.data.data.who_we_are);
-        console.log("Mission/Vision Data:", response.data.data.mission_vision);
-        console.log("Features Data:", response.data.data.features);
-        console.log("CTA Data:", response.data.data.cta);
+        
       }
     } catch (error) {
       console.error("Error fetching about us data:", error);
