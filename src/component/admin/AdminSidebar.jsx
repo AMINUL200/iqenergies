@@ -38,12 +38,12 @@ const AdminSidebar = ({ isOpen, setIsOpen }) => {
       icon: <LayoutDashboard className="w-5 h-5" />,
       path: "/admin",
     },
-    {
-      id: "profile",
-      label: "Profile",
-      icon: <User2 className="w-5 h-5" />,
-      path: "/admin/profile",
-    },
+    // {
+    //   id: "profile",
+    //   label: "Profile",
+    //   icon: <User2 className="w-5 h-5" />,
+    //   path: "/admin/profile",
+    // },
     {
       id: "banners-management",
       label: "Banners Management",
