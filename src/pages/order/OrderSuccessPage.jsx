@@ -58,7 +58,7 @@ const OrderSuccessPage = () => {
         </p>
 
         {/* ================= ORDER INFO ================= */}
-        <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 text-left max-w-xl mx-auto">
+        {/* <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6 mb-8 text-left max-w-xl mx-auto">
           <div className="flex justify-between mb-3">
             <span className="text-gray-600">Order Status</span>
             <span className="font-semibold text-green-600">Confirmed</span>
@@ -80,7 +80,7 @@ const OrderSuccessPage = () => {
             <span className="text-gray-600">Total Amount</span>
             <span className="font-bold text-gray-900">₹45,000</span>
           </div>
-        </div>
+        </div> */}
 
         {/* ================= NEXT STEPS ================= */}
         <div className="bg-green-50 border border-green-200 rounded-2xl p-6 mb-8 max-w-xl mx-auto">
