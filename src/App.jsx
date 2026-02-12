@@ -58,6 +58,8 @@ import HandleOrder from "./pages/admin/product/HandleOrder";
 import HandleOrdersDetails from "./pages/admin/product/HandleOrdersDetails";
 import HandleFranchises from "./pages/admin/franchises/HandleFranchises";
 import HandleFranchiseRequests from "./pages/admin/franchises/HandleFranchiseRequests";
+import ContactPage from "./pages/contact/ContactPage";
+import FranchisePage from "./pages/franchise/FranchisePage";
 
 const App = () => {
   return (
@@ -92,6 +94,8 @@ const App = () => {
             <Route path="/services/:slug" element={<ServicesDetails />} />
             <Route path="/solution/:slug" element={<SolutionDetails />} />
             <Route path="/cart" element={<AddToCartPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/franchise" element={<FranchisePage />} />
 
             <Route path="/brochure" element={<BrochurePage />} />
             <Route path="/certificate" element={<CertificatePage />} />

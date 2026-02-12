@@ -9,8 +9,8 @@ import { useAuth } from "../../context/AuthContext";
 const LoginPage = () => {
   const { login } = useAuth();
   const [formData, setFormData] = useState({
-    email: "admin@iqenergies.com",
-    password: "admin123",
+    email: "",
+    password: "",
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);

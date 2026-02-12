@@ -6,6 +6,8 @@ import Navbar from "../component/common/Navbar";
 import BackToTop from "../component/common/BackToTop";
 import PageLoader from "../component/common/PageLoader";
 import { api } from "../utils/app";
+import Navbar2 from "../component/common/Navbar2";
+import WhatsAppFloat from "../component/common/WhatsAppFloat";
 
 const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -94,10 +96,12 @@ const AppLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar toggleMenu={toggleSidebar} contactInfo={appData.contactInfo} />
+      {/* <Navbar toggleMenu={toggleSidebar} contactInfo={appData.contactInfo} /> */}
+      <Navbar2 toggleMenu={toggleSidebar} contactInfo={appData.contactInfo} />
       <SideBar toggleMenu={toggleSidebar} isOpen={sidebarOpen} />
       <Outlet />
       <BackToTop />
+      <WhatsAppFloat />
       <Footer footerInfo={appData.contactInfo} />
     </div>
   );

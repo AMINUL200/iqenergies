@@ -489,7 +489,7 @@ const SolarFranchise = ({ franchiseInfo = {} }) => {
                       boxShadow: `0 10px 30px ${colors.primary}40`,
                     }}
                   >
-                    Apply for Franchise
+                    Contact for Franchise
                     <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                   </button>
                   <button

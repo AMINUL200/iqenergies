@@ -163,6 +163,21 @@ const getCategoryTheme = (categoryName) => {
       button:
         "bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600",
     },
+    all: {
+      primary: "#6366F1", // Indigo
+      secondary: "#8B5CF6",
+      accent: "#4F46E5",
+      background: "#F5F3FF",
+      textPrimary: "#1E1B4B",
+      textMuted: "#4338CA",
+      gradient: "from-indigo-500 via-purple-500 to-indigo-600",
+      light: "bg-indigo-500/10",
+      border: "border-indigo-500/20",
+      badge: "bg-indigo-500/20 text-indigo-300 border-indigo-500/30",
+      button:
+        "bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600",
+    },
+
     default: {
       primary: "#10B981",
       secondary: "#34D399",
@@ -209,7 +224,7 @@ const cartUtils = {
   // Add or update product in cart
   addToCart: (product, quantity = 1) => {
     const cart = cartUtils.getCart();
-    
+
     if (cart[product.id]) {
       cart[product.id].quantity += quantity;
     } else {
@@ -219,7 +234,7 @@ const cartUtils = {
         addedAt: new Date().toISOString(),
       };
     }
-    
+
     cartUtils.saveCart(cart);
     return cart;
   },
@@ -227,13 +242,13 @@ const cartUtils = {
   // Update quantity
   updateQuantity: (productId, quantity) => {
     const cart = cartUtils.getCart();
-    
+
     if (quantity <= 0) {
       delete cart[productId];
     } else if (cart[productId]) {
       cart[productId].quantity = quantity;
     }
-    
+
     cartUtils.saveCart(cart);
     return cart;
   },
@@ -246,22 +261,23 @@ const cartUtils = {
 
   // Dispatch cart update event
   dispatchCartUpdate: () => {
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
+    window.dispatchEvent(new CustomEvent("cartUpdated"));
   },
 };
 
 // Calculate discount percentage
 const calculateDiscountPercentage = (originalPrice, sellingPrice) => {
-  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice) return 0;
+  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice)
+    return 0;
   const discount = ((originalPrice - sellingPrice) / originalPrice) * 100;
   return Math.round(discount * 10) / 10; // Round to 1 decimal place
 };
 
 // Format currency in Indian Rupees
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -310,11 +326,19 @@ const ProductPage = () => {
 
         const categoryTabs = Object.values(categories);
         categoryTabs.sort((a, b) => a.label.localeCompare(b.label));
-        setTabs(categoryTabs);
 
-        if (categoryTabs.length > 0) {
-          setActiveTab(categoryTabs[0].key);
-        }
+        // ✅ Add "All" tab at the beginning
+        const allTab = {
+          key: "all",
+          label: "All",
+          icon: Grid, // you already imported Grid
+          count: data.length,
+        };
+
+        const updatedTabs = [allTab, ...categoryTabs];
+
+        setTabs(updatedTabs);
+        setActiveTab("all"); // Default active tab = All
       } catch (error) {
         console.error("Error fetching products:", error);
       } finally {
@@ -328,18 +352,18 @@ const ProductPage = () => {
   // Load cart quantities on component mount and listen for updates
   useEffect(() => {
     loadCartQuantities();
-    
-    window.addEventListener('cartUpdated', loadCartQuantities);
-    
+
+    window.addEventListener("cartUpdated", loadCartQuantities);
+
     return () => {
-      window.removeEventListener('cartUpdated', loadCartQuantities);
+      window.removeEventListener("cartUpdated", loadCartQuantities);
     };
   }, []);
 
   const loadCartQuantities = () => {
     const cart = cartUtils.getCart();
     const quantities = {};
-    Object.keys(cart).forEach(productId => {
+    Object.keys(cart).forEach((productId) => {
       quantities[productId] = cart[productId].quantity;
     });
     setCartQuantities(quantities);
@@ -355,6 +379,11 @@ const ProductPage = () => {
   // Get products for active tab
   const getProductsForActiveTab = () => {
     if (!activeTab || productData.length === 0) return [];
+
+    // ✅ If "All" selected → return everything
+    if (activeTab === "all") {
+      return productData;
+    }
 
     return productData.filter((product) => {
       const category = product.category;
@@ -389,8 +418,9 @@ const ProductPage = () => {
     // Parse prices
     const originalPrice = parseFloat(product.price) || 0;
     const sellingPrice = parseFloat(product.sell_price) || originalPrice;
-    const discountPercentage = parseFloat(product.discount_percentage) || 
-                              calculateDiscountPercentage(originalPrice, sellingPrice);
+    const discountPercentage =
+      parseFloat(product.discount_percentage) ||
+      calculateDiscountPercentage(originalPrice, sellingPrice);
 
     return {
       id: product.id,
@@ -420,7 +450,7 @@ const ProductPage = () => {
   const filteredProducts = processedProducts
     .filter(
       (product) =>
-        selectedCategory === "all" || product.category === selectedCategory
+        selectedCategory === "all" || product.category === selectedCategory,
     )
     .sort((a, b) => {
       switch (sortBy) {
@@ -448,14 +478,14 @@ const ProductPage = () => {
 
   const handleAddToCart = async (product) => {
     try {
-      setAddingToCart(prev => ({ ...prev, [product.id]: true }));
-      
+      setAddingToCart((prev) => ({ ...prev, [product.id]: true }));
+
       cartUtils.addToCart(product, 1);
-      
+
       // Update local state
-      setCartQuantities(prev => ({
+      setCartQuantities((prev) => ({
         ...prev,
-        [product.id]: (prev[product.id] || 0) + 1
+        [product.id]: (prev[product.id] || 0) + 1,
       }));
 
       // Notify other components
@@ -463,23 +493,23 @@ const ProductPage = () => {
 
       console.log(`Added ${product.title} to cart`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error("Error adding to cart:", error);
     } finally {
-      setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+      setAddingToCart((prev) => ({ ...prev, [product.id]: false }));
     }
   };
 
   const incrementQuantity = (product) => {
     const currentQuantity = getProductQuantity(product.id);
     const newQuantity = currentQuantity + 1;
-    
+
     cartUtils.updateQuantity(product.id, newQuantity);
-    
-    setCartQuantities(prev => ({
+
+    setCartQuantities((prev) => ({
       ...prev,
-      [product.id]: newQuantity
+      [product.id]: newQuantity,
     }));
-    
+
     cartUtils.dispatchCartUpdate();
   };
 
@@ -487,22 +517,22 @@ const ProductPage = () => {
     const currentQuantity = getProductQuantity(product.id);
     if (currentQuantity > 0) {
       const newQuantity = currentQuantity - 1;
-      
+
       cartUtils.updateQuantity(product.id, newQuantity);
-      
+
       if (newQuantity === 0) {
-        setCartQuantities(prev => {
+        setCartQuantities((prev) => {
           const updated = { ...prev };
           delete updated[product.id];
           return updated;
         });
       } else {
-        setCartQuantities(prev => ({
+        setCartQuantities((prev) => ({
           ...prev,
-          [product.id]: newQuantity
+          [product.id]: newQuantity,
         }));
       }
-      
+
       cartUtils.dispatchCartUpdate();
     }
   };
@@ -513,33 +543,41 @@ const ProductPage = () => {
     const hasDiscount = product.discountPercentage > 0;
 
     return (
-      <div className={`flex flex-col ${isList ? 'mb-4' : 'mb-3'}`}>
+      <div className={`flex flex-col ${isList ? "mb-4" : "mb-3"}`}>
         {/* Selling Price - Large and prominent */}
         <div className="flex items-center gap-2">
-          <span className={`font-bold ${isList ? 'text-3xl md:text-4xl' : 'text-2xl md:text-3xl'}`} style={{ color: colors.primary }}>
+          <span
+            className={`font-bold ${isList ? "text-3xl md:text-4xl" : "text-2xl md:text-3xl"}`}
+            style={{ color: colors.primary }}
+          >
             ₹{product.sellingPrice.toLocaleString("en-IN")}
           </span>
-          
+
           {/* Discount Badge */}
           {hasDiscount && (
-            <div className={`flex items-center ${isList ? 'px-3 py-1' : 'px-2 py-0.5'} rounded-full font-bold`}
-              style={{ backgroundColor: '#FF6161', color: 'white' }}>
-              <Percent className={`${isList ? 'w-3 h-3' : 'w-2 h-2'} mr-1`} />
-              <span className={`${isList ? 'text-sm' : 'text-xs'}`}>
+            <div
+              className={`flex items-center ${isList ? "px-3 py-1" : "px-2 py-0.5"} rounded-full font-bold`}
+              style={{ backgroundColor: "#FF6161", color: "white" }}
+            >
+              <Percent className={`${isList ? "w-3 h-3" : "w-2 h-2"} mr-1`} />
+              <span className={`${isList ? "text-sm" : "text-xs"}`}>
                 {product.discountPercentage}% off
               </span>
             </div>
           )}
         </div>
-        
+
         {/* Original Price with strikethrough */}
         {hasDiscount && (
           <div className="flex items-center gap-2 mt-1">
-            <span className={`text-gray-500 ${isList ? 'text-lg' : 'text-base'} line-through`}>
+            <span
+              className={`text-gray-500 ${isList ? "text-lg" : "text-base"} line-through`}
+            >
               ₹{product.originalPrice.toLocaleString("en-IN")}
             </span>
             <span className="text-sm text-gray-600">
-              ({formatCurrency(product.originalPrice - product.sellingPrice)} saved)
+              ({formatCurrency(product.originalPrice - product.sellingPrice)}{" "}
+              saved)
             </span>
           </div>
         )}
@@ -612,7 +650,7 @@ const ProductPage = () => {
           disabled={isLoading || !product.inStock}
           className={`w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold text-white 
             transition-all hover:scale-105 flex items-center justify-center 
-            gap-1 sm:gap-2 text-sm flex-1 ${product.inStock ? colors.button : 'bg-gray-400 cursor-not-allowed'}`}
+            gap-1 sm:gap-2 text-sm flex-1 ${product.inStock ? colors.button : "bg-gray-400 cursor-not-allowed"}`}
         >
           {isLoading ? (
             <>
@@ -635,7 +673,7 @@ const ProductPage = () => {
           onClick={() => decrementQuantity(product)}
           disabled={isLoading}
           className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
-            ${isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-red-500/20 hover:bg-red-500/30'}`}
+            ${isLoading ? "bg-gray-700 cursor-not-allowed" : "bg-red-500/20 hover:bg-red-500/30"}`}
         >
           {isLoading ? (
             <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
@@ -653,7 +691,7 @@ const ProductPage = () => {
           onClick={() => incrementQuantity(product)}
           disabled={isLoading}
           className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
-            ${isLoading ? 'bg-gray-700 cursor-not-allowed' : 'bg-green-500/20 hover:bg-green-500/30'}`}
+            ${isLoading ? "bg-gray-700 cursor-not-allowed" : "bg-green-500/20 hover:bg-green-500/30"}`}
         >
           {isLoading ? (
             <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
@@ -1031,7 +1069,7 @@ const ProductPage = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       {/* Category Badge */}
                       <div className="absolute bottom-3 left-3">
                         <div
@@ -1044,7 +1082,7 @@ const ProductPage = () => {
                           {product.category}
                         </div>
                       </div>
-                      
+
                       {/* Cart Quantity Badge */}
                       {getProductQuantity(product.id) > 0 && (
                         <div className="absolute bottom-3 right-3">
@@ -1122,7 +1160,7 @@ const ProductPage = () => {
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/product/${product.slug || product.id}`
+                                  `/product/${product.slug || product.id}`,
                                 )
                               }
                               className="px-3 py-2 md:px-4 md:py-2 rounded-lg font-semibold transition-all hover:scale-105 flex items-center justify-center gap-1 md:gap-2 text-sm"
