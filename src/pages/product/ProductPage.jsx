@@ -541,7 +541,7 @@ const ProductPage = () => {
   const PriceDisplay = ({ product, isList = false }) => {
     const colors = getCurrentTheme();
     const hasDiscount = product.discountPercentage > 0;
-
+    console.log(product);
     return (
       <div className={`flex flex-col ${isList ? "mb-4" : "mb-3"}`}>
         {/* Selling Price - Large and prominent */}
@@ -996,7 +996,9 @@ const ProductPage = () => {
                     </p> */}
 
                     {/* Price Display */}
-                    <PriceDisplay product={product} />
+                    {product.originalPrice > 0 && (
+                      <PriceDisplay product={product} />
+                    )}
 
                     {/* Delivery Info */}
                     <div
@@ -1018,7 +1020,17 @@ const ProductPage = () => {
                       style={{ borderColor: colors.border }}
                     >
                       <div className="flex flex-col sm:flex-row gap-2">
-                        <CartButton product={product} />
+                        {product.originalPrice === 0 ? (
+                          <button
+                            onClick={() => navigate("/contact")}
+                            className={`w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold text-white 
+      transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm ${product.inStock ? colors.button : "bg-gray-400 cursor-not-allowed"}`}
+                          >
+                            Contact Us
+                          </button>
+                        ) : (
+                          <CartButton product={product} />
+                        )}
 
                         <button
                           onClick={() =>
@@ -1124,7 +1136,9 @@ const ProductPage = () => {
                           </div>
 
                           {/* Price Display */}
-                          <PriceDisplay product={product} isList={true} />
+                          {product.originalPrice > 0 && (
+                            <PriceDisplay product={product} isList={true} />
+                          )}
 
                           {/* Details */}
                           <div className="flex flex-wrap items-center gap-3 md:gap-6 text-xs md:text-sm">
@@ -1156,7 +1170,18 @@ const ProductPage = () => {
                         {/* Actions */}
                         <div className="mt-3 md:mt-0 md:ml-4 lg:ml-6 flex flex-col">
                           <div className="flex flex-col sm:flex-row md:flex-col lg:flex-row gap-2">
-                            <CartButton product={product} />
+                            {product.originalPrice === 0 ? (
+                              <button
+                                onClick={() => navigate("/contact")}
+                                className={`w-full px-3 py-2 sm:px-4 sm:py-2 rounded-lg font-semibold text-white 
+      transition-all hover:scale-105 flex items-center justify-center gap-2 text-sm ${product.inStock ? colors.button : "bg-gray-400 cursor-not-allowed"}`}
+                              >
+                                Contact Us
+                              </button>
+                            ) : (
+                              <CartButton product={product} />
+                            )}
+
                             <button
                               onClick={() =>
                                 navigate(

@@ -93,7 +93,7 @@ const ProductDetails = () => {
         // Find primary image index
         if (response.data.data.images && response.data.data.images.length > 0) {
           const primaryIndex = response.data.data.images.findIndex(
-            (img) => img.is_primary
+            (img) => img.is_primary,
           );
           setActiveImage(primaryIndex >= 0 ? primaryIndex : 0);
         }
@@ -107,7 +107,6 @@ const ProductDetails = () => {
       setLoading(false);
     }
   };
-
 
   const handleBuyNow = async () => {
     if (!product) return;
@@ -150,7 +149,7 @@ const ProductDetails = () => {
 
     if (res.data?.success) {
       console.log(res.data);
-      
+
       localStorage.setItem("cart_token", res.data.cart_token);
     } else {
       throw new Error("Failed to add product to cart");
@@ -180,7 +179,7 @@ const ProductDetails = () => {
               ? "text-yellow-400 fill-yellow-400"
               : "text-gray-300"
           }`}
-        />
+        />,
       );
     }
     return stars;
@@ -200,7 +199,7 @@ const ProductDetails = () => {
   const prevImage = () => {
     if (product.images && product.images.length > 0) {
       setActiveImage(
-        (prev) => (prev - 1 + product.images.length) % product.images.length
+        (prev) => (prev - 1 + product.images.length) % product.images.length,
       );
     }
   };
@@ -245,6 +244,8 @@ const ProductDetails = () => {
   const discountPercentage =
     parseFloat(product.discount_percentage) ||
     calculateDiscountPercentage(originalPrice, sellingPrice);
+
+  const isContactOnly = sellingPrice <= 0;
 
   // Calculate total price
   const totalOriginalPrice = originalPrice * quantity;
@@ -366,49 +367,51 @@ const ProductDetails = () => {
             </p>
 
             {/* ================= PRICE SECTION ================= */}
-            <div className="space-y-3">
-              {/* Selling Price - Large and prominent */}
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-gray-900">
-                  ₹{sellingPrice.toLocaleString("en-IN")}
-                </span>
+            {!isContactOnly && (
+              <div className="space-y-3">
+                {/* Selling Price - Large and prominent */}
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl font-bold text-gray-900">
+                    ₹{sellingPrice.toLocaleString("en-IN")}
+                  </span>
 
-                {/* Discount Badge */}
+                  {/* Discount Badge */}
+                  {discountPercentage > 0 && (
+                    <div
+                      className="flex items-center px-2 py-1 rounded-full font-bold"
+                      style={{ backgroundColor: "#FF6161", color: "white" }}
+                    >
+                      <Percent className="w-3 h-3 mr-1" />
+                      <span className="text-sm">{discountPercentage}% off</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Original Price with strikethrough */}
                 {discountPercentage > 0 && (
-                  <div
-                    className="flex items-center px-2 py-1 rounded-full font-bold"
-                    style={{ backgroundColor: "#FF6161", color: "white" }}
-                  >
-                    <Percent className="w-3 h-3 mr-1" />
-                    <span className="text-sm">{discountPercentage}% off</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500 text-lg line-through">
+                      ₹{originalPrice.toLocaleString("en-IN")}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      ({formatCurrency(originalPrice - sellingPrice)} saved per
+                      unit)
+                    </span>
+                  </div>
+                )}
+
+                {/* Per Unit Text */}
+                <span className="text-sm text-gray-500">(Per Unit)</span>
+
+                {/* Pre-order Badge */}
+                {product.is_preorder && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <Clock className="w-3 h-3" />
+                    Pre-order Available
                   </div>
                 )}
               </div>
-
-              {/* Original Price with strikethrough */}
-              {discountPercentage > 0 && (
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 text-lg line-through">
-                    ₹{originalPrice.toLocaleString("en-IN")}
-                  </span>
-                  <span className="text-sm text-gray-600">
-                    ({formatCurrency(originalPrice - sellingPrice)} saved per
-                    unit)
-                  </span>
-                </div>
-              )}
-
-              {/* Per Unit Text */}
-              <span className="text-sm text-gray-500">(Per Unit)</span>
-
-              {/* Pre-order Badge */}
-              {product.is_preorder && (
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                  <Clock className="w-3 h-3" />
-                  Pre-order Available
-                </div>
-              )}
-            </div>
+            )}
 
             {/* Product Details Grid */}
             <div className="grid grid-cols-2 gap-4">
@@ -453,59 +456,60 @@ const ProductDetails = () => {
             </div>
 
             {/* ================= QUANTITY SELECTOR ================= */}
-            <div className="border border-gray-200 rounded-xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <span className="font-medium text-gray-700">Quantity</span>
+            {!isContactOnly && (
+              <div className="border border-gray-200 rounded-xl p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="font-medium text-gray-700">Quantity</span>
 
-                {/* Quantity Controls */}
-                <div className="flex items-center bg-gray-100 rounded-lg">
-                  <button
-                    onClick={decrementQuantity}
-                    disabled={quantity <= 1}
-                    className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Minus className="w-4 h-4" />
-                  </button>
-                  <span className="px-4 py-2 font-bold text-gray-900 min-w-[60px] text-center">
-                    {quantity}
-                  </span>
-                  <button
-                    onClick={incrementQuantity}
-                    className="p-2 text-gray-600 hover:text-gray-900"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Total Price Breakdown */}
-              <div className="space-y-2 border-t border-gray-200 pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">
-                    Price ({quantity} units)
-                  </span>
-                  <span className="text-gray-900 font-medium">
-                    ₹{totalSellingPrice.toLocaleString("en-IN")}
-                  </span>
+                  {/* Quantity Controls */}
+                  <div className="flex items-center bg-gray-100 rounded-lg">
+                    <button
+                      onClick={decrementQuantity}
+                      disabled={quantity <= 1}
+                      className="p-2 text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="w-4 h-4" />
+                    </button>
+                    <span className="px-4 py-2 font-bold text-gray-900 min-w-[60px] text-center">
+                      {quantity}
+                    </span>
+                    <button
+                      onClick={incrementQuantity}
+                      className="p-2 text-gray-600 hover:text-gray-900"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
-                {discountPercentage > 0 && (
-                  <>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Original Price</span>
-                      <span className="text-gray-500 line-through">
-                        ₹{totalOriginalPrice.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm text-green-600 font-medium">
-                      <span>You Save</span>
-                      <span>₹{totalSaved.toLocaleString("en-IN")}</span>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+                {/* Total Price Breakdown */}
+                <div className="space-y-2 border-t border-gray-200 pt-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">
+                      Price ({quantity} units)
+                    </span>
+                    <span className="text-gray-900 font-medium">
+                      ₹{totalSellingPrice.toLocaleString("en-IN")}
+                    </span>
+                  </div>
 
+                  {discountPercentage > 0 && (
+                    <>
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Original Price</span>
+                        <span className="text-gray-500 line-through">
+                          ₹{totalOriginalPrice.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-sm text-green-600 font-medium">
+                        <span>You Save</span>
+                        <span>₹{totalSaved.toLocaleString("en-IN")}</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
             {/* ================= FEATURES ================= */}
             {product.features && product.features.length > 0 && (
               <div className="grid sm:grid-cols-2 gap-4">
@@ -524,53 +528,62 @@ const ProductDetails = () => {
 
             {/* ================= BUY BOX ================= */}
             <div className="border border-gray-200 rounded-2xl p-6 space-y-6 bg-gray-50">
-              <div className="flex flex-col sm:flex-row gap-3">
-                {/* Add to Cart Button */}
-
-                {/* Buy Now Button */}
+              {isContactOnly ? (
                 <button
-                  onClick={handleBuyNow}
-                  disabled={addingToCart}
-                  className={`flex-1 group inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg 
+                  onClick={() => navigate("/contact")}
+                  className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-lg 
+      font-semibold bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl hover:shadow-green-500/30"
+                >
+                  Contact for Price
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Buy Now Button */}
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={addingToCart}
+                    className={`flex-1 group inline-flex items-center justify-center gap-3 px-6 py-4 rounded-lg 
     font-semibold transition-all duration-300
     ${
       addingToCart
         ? "bg-green-600/60 cursor-not-allowed"
         : "bg-gradient-to-r from-green-500 to-green-600 hover:shadow-xl hover:shadow-green-500/30"
     } text-white`}
-                >
-                  {addingToCart ? (
-                    <>
-                      {/* Loader */}
-                      <svg
-                        className="animate-spin h-5 w-5 text-white"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-                        />
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      {product.is_preorder ? "Pre-order Now" : "Buy Now"}
-                      <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    </>
-                  )}
-                </button>
-              </div>
+                  >
+                    {addingToCart ? (
+                      <>
+                        {/* Loader */}
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
+                          />
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        {product.is_preorder ? "Pre-order Now" : "Buy Now"}
+                        <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
 
               {/* Trust & Security */}
               <div className="grid grid-cols-2 gap-4 text-xs text-gray-500">
@@ -617,7 +630,7 @@ const ProductDetails = () => {
             <div
               className="text-gray-600 leading-relaxed prose max-w-none"
               dangerouslySetInnerHTML={createMarkup(
-                product.information.information
+                product.information.information,
               )}
             />
           </div>

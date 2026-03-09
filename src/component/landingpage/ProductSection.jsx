@@ -164,16 +164,17 @@ const generateDynamicTheme = (categoryKey) => {
 
 // Calculate discount percentage
 const calculateDiscountPercentage = (originalPrice, sellingPrice) => {
-  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice) return 0;
+  if (!originalPrice || !sellingPrice || originalPrice <= sellingPrice)
+    return 0;
   const discount = ((originalPrice - sellingPrice) / originalPrice) * 100;
   return Math.round(discount * 10) / 10; // Round to 1 decimal place
 };
 
 // Format currency in Indian Rupees
 const formatCurrency = (amount) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
@@ -184,33 +185,40 @@ const PriceDisplay = ({ product, compact = false }) => {
   const hasDiscount = product.discountPercentage > 0;
 
   return (
-    <div className={`flex flex-col ${compact ? 'mb-2' : 'mb-3'}`}>
+    <div className={`flex flex-col ${compact ? "mb-2" : "mb-3"}`}>
       {/* Selling Price - Large and prominent */}
       <div className="flex items-center gap-2">
-        <span className={`font-bold ${compact ? 'text-xl' : 'text-2xl'} text-white`}>
+        <span
+          className={`font-bold ${compact ? "text-xl" : "text-2xl"} text-white`}
+        >
           ₹{product.sellingPrice.toLocaleString("en-IN")}
         </span>
-        
+
         {/* Discount Badge */}
         {hasDiscount && (
-          <div className={`flex items-center ${compact ? 'px-2 py-0.5' : 'px-2 py-1'} rounded-full font-bold`}
-            style={{ backgroundColor: '#FF6161', color: 'white' }}>
-            <Percent className={`${compact ? 'w-2 h-2' : 'w-3 h-3'} mr-1`} />
-            <span className={`${compact ? 'text-xs' : 'text-sm'}`}>
+          <div
+            className={`flex items-center ${compact ? "px-2 py-0.5" : "px-2 py-1"} rounded-full font-bold`}
+            style={{ backgroundColor: "#FF6161", color: "white" }}
+          >
+            <Percent className={`${compact ? "w-2 h-2" : "w-3 h-3"} mr-1`} />
+            <span className={`${compact ? "text-xs" : "text-sm"}`}>
               {product.discountPercentage}% off
             </span>
           </div>
         )}
       </div>
-      
+
       {/* Original Price with strikethrough */}
       {hasDiscount && (
         <div className="flex items-center gap-2 mt-1">
-          <span className={`text-gray-400 ${compact ? 'text-sm' : 'text-base'} line-through`}>
+          <span
+            className={`text-gray-400 ${compact ? "text-sm" : "text-base"} line-through`}
+          >
             ₹{product.originalPrice.toLocaleString("en-IN")}
           </span>
           <span className="text-xs text-gray-500">
-            ({formatCurrency(product.originalPrice - product.sellingPrice)} saved)
+            ({formatCurrency(product.originalPrice - product.sellingPrice)}{" "}
+            saved)
           </span>
         </div>
       )}
@@ -230,11 +238,11 @@ const ProductSection = ({ productData = [] }) => {
   useEffect(() => {
     const cart = JSON.parse(localStorage.getItem("cart")) || {};
     const quantities = {};
-    
-    Object.keys(cart).forEach(productId => {
+
+    Object.keys(cart).forEach((productId) => {
       quantities[productId] = cart[productId].quantity;
     });
-    
+
     setCartQuantities(quantities);
   }, []);
 
@@ -306,8 +314,9 @@ const ProductSection = ({ productData = [] }) => {
       // Parse prices
       const originalPrice = parseFloat(product.price) || 0;
       const sellingPrice = parseFloat(product.sell_price) || originalPrice;
-      const discountPercentage = parseFloat(product.discount_percentage) || 
-                                calculateDiscountPercentage(originalPrice, sellingPrice);
+      const discountPercentage =
+        parseFloat(product.discount_percentage) ||
+        calculateDiscountPercentage(originalPrice, sellingPrice);
 
       groupedProducts[categorySlug].push({
         id: product.id,
@@ -353,26 +362,26 @@ const ProductSection = ({ productData = [] }) => {
   // Add to cart (stores in localStorage)
   const handleAddToCart = async (product) => {
     try {
-      setAddingToCart(prev => ({ ...prev, [product.id]: true }));
-      
+      setAddingToCart((prev) => ({ ...prev, [product.id]: true }));
+
       // Add to localStorage
       addToCart(product, 1);
-      
+
       // Update local state
-      setCartQuantities(prev => ({
+      setCartQuantities((prev) => ({
         ...prev,
-        [product.id]: (prev[product.id] || 0) + 1
+        [product.id]: (prev[product.id] || 0) + 1,
       }));
 
       // Dispatch custom event to notify navbar about cart update
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
 
       // Optional: Show success message
       console.log(`Added ${product.title} to cart`);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      console.error("Error adding to cart:", error);
     } finally {
-      setAddingToCart(prev => ({ ...prev, [product.id]: false }));
+      setAddingToCart((prev) => ({ ...prev, [product.id]: false }));
     }
   };
 
@@ -380,15 +389,15 @@ const ProductSection = ({ productData = [] }) => {
   const incrementQuantity = (product) => {
     const currentQuantity = getProductQuantity(product.id);
     const newQuantity = currentQuantity + 1;
-    
+
     updateQuantity(product.id, newQuantity);
-    
-    setCartQuantities(prev => ({
+
+    setCartQuantities((prev) => ({
       ...prev,
-      [product.id]: newQuantity
+      [product.id]: newQuantity,
     }));
-    
-    window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+    window.dispatchEvent(new CustomEvent("cartUpdated"));
   };
 
   // Decrement quantity
@@ -396,29 +405,29 @@ const ProductSection = ({ productData = [] }) => {
     const currentQuantity = getProductQuantity(product.id);
     if (currentQuantity > 0) {
       const newQuantity = currentQuantity - 1;
-      
+
       if (newQuantity === 0) {
         // Remove from localStorage
         const cart = JSON.parse(localStorage.getItem("cart")) || {};
         delete cart[product.id];
         localStorage.setItem("cart", JSON.stringify(cart));
-        
+
         // Update local state
-        setCartQuantities(prev => {
+        setCartQuantities((prev) => {
           const updated = { ...prev };
           delete updated[product.id];
           return updated;
         });
       } else {
         updateQuantity(product.id, newQuantity);
-        
-        setCartQuantities(prev => ({
+
+        setCartQuantities((prev) => ({
           ...prev,
-          [product.id]: newQuantity
+          [product.id]: newQuantity,
         }));
       }
-      
-      window.dispatchEvent(new CustomEvent('cartUpdated'));
+
+      window.dispatchEvent(new CustomEvent("cartUpdated"));
     }
   };
 
@@ -585,7 +594,9 @@ const ProductSection = ({ productData = [] }) => {
                     )}
 
                     {/* Price Display */}
-                    <PriceDisplay product={product} compact={true} />
+                    {product.sellingPrice > 0 && (
+                      <PriceDisplay product={product} compact={true} />
+                    )}
 
                     {/* Rating */}
                     {product.rating > 0 && (
@@ -599,15 +610,24 @@ const ProductSection = ({ productData = [] }) => {
 
                     {/* Cart Controls */}
                     <div className="mt-4">
-                      {quantity === 0 ? (
+                      {product.sellingPrice <= 0 ? (
+                        // Contact Button when price is 0
+                        <button
+                          onClick={() => navigate("/contact")}
+                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold bg-gradient-to-r ${theme.gradient} hover:opacity-90 transition`}
+                        >
+                          Contact Us
+                        </button>
+                      ) : quantity === 0 ? (
                         // Add to Cart Button (when quantity is 0)
                         <button
                           onClick={() => handleAddToCart(product)}
                           disabled={isLoading}
                           className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all
-                            ${isLoading 
-                              ? 'bg-gray-600 cursor-not-allowed' 
-                              : `bg-gradient-to-r ${theme.gradient} hover:opacity-90`
+                            ${
+                              isLoading
+                                ? "bg-gray-600 cursor-not-allowed"
+                                : `bg-gradient-to-r ${theme.gradient} hover:opacity-90`
                             }`}
                         >
                           {isLoading ? (
@@ -630,9 +650,10 @@ const ProductSection = ({ productData = [] }) => {
                             onClick={() => decrementQuantity(product)}
                             disabled={isLoading}
                             className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
-                              ${isLoading 
-                                ? 'bg-gray-700 cursor-not-allowed' 
-                                : 'bg-red-500/20 hover:bg-red-500/30'
+                              ${
+                                isLoading
+                                  ? "bg-gray-700 cursor-not-allowed"
+                                  : "bg-red-500/20 hover:bg-red-500/30"
                               }`}
                           >
                             {isLoading ? (
@@ -657,9 +678,10 @@ const ProductSection = ({ productData = [] }) => {
                             onClick={() => incrementQuantity(product)}
                             disabled={isLoading}
                             className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
-                              ${isLoading 
-                                ? 'bg-gray-700 cursor-not-allowed' 
-                                : 'bg-green-500/20 hover:bg-green-500/30'
+                              ${
+                                isLoading
+                                  ? "bg-gray-700 cursor-not-allowed"
+                                  : "bg-green-500/20 hover:bg-green-500/30"
                               }`}
                           >
                             {isLoading ? (

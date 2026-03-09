@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Save,
   Loader2,
@@ -31,6 +31,7 @@ const HandleProduct = () => {
   const [success, setSuccess] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const formRef = useRef(null);
 
   // Image management states
   const [showImageForm, setShowImageForm] = useState(false);
@@ -107,12 +108,12 @@ const HandleProduct = () => {
   const calculateSellingPrice = () => {
     const price = parseFloat(formData.price) || 0;
     const discountPercentage = parseFloat(formData.discount_percentage) || 0;
-    
+
     if (price === 0) return 0;
-    
+
     const discountAmount = (price * discountPercentage) / 100;
     const sellingPrice = price - discountAmount;
-    
+
     return sellingPrice.toFixed(2);
   };
 
@@ -120,26 +121,26 @@ const HandleProduct = () => {
   const calculateGSTBreakdown = () => {
     const sellingPrice = parseFloat(calculateSellingPrice()) || 0;
     const hsnDetails = getSelectedHsnDetails();
-    
+
     if (!hsnDetails || sellingPrice === 0) {
       return {
         gstRate: 0,
         gstIncluded: 0,
-        basePriceWithoutGST: sellingPrice
+        basePriceWithoutGST: sellingPrice,
       };
     }
-    
+
     const gstRate = parseFloat(hsnDetails.gst_rate) || 0;
-    
+
     // Calculate GST included in the price
     // Formula: GST Amount = (Selling Price * GST Rate) / (100 + GST Rate)
     const gstIncluded = (sellingPrice * gstRate) / (100 + gstRate);
     const basePriceWithoutGST = sellingPrice - gstIncluded;
-    
+
     return {
       gstRate,
       gstIncluded: gstIncluded.toFixed(2),
-      basePriceWithoutGST: basePriceWithoutGST.toFixed(2)
+      basePriceWithoutGST: basePriceWithoutGST.toFixed(2),
     };
   };
 
@@ -224,6 +225,11 @@ const HandleProduct = () => {
 
     setEditingId(product.id);
     setShowForm(true);
+
+    // Scroll to form
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 100);
   };
 
   const handleSubmit = async (e) => {
@@ -260,7 +266,7 @@ const HandleProduct = () => {
       if (response.data.success) {
         setSuccess(
           response.data.message ||
-            `Product ${editingId ? "updated" : "created"} successfully!`
+            `Product ${editingId ? "updated" : "created"} successfully!`,
         );
 
         await fetchData();
@@ -287,7 +293,7 @@ const HandleProduct = () => {
       } else {
         setError(
           response.data.message ||
-            `Failed to ${editingId ? "update" : "create"} product.`
+            `Failed to ${editingId ? "update" : "create"} product.`,
         );
       }
     } catch (err) {
@@ -319,7 +325,7 @@ const HandleProduct = () => {
   const handleDelete = async (id) => {
     if (
       !window.confirm(
-        "Are you sure you want to delete this product? This will also delete all associated images and information."
+        "Are you sure you want to delete this product? This will also delete all associated images and information.",
       )
     ) {
       return;
@@ -453,7 +459,7 @@ const HandleProduct = () => {
 
       const response = await api.post(
         "/admin/product-image-store",
-        formDataObj
+        formDataObj,
       );
 
       if (response.data.success) {
@@ -506,7 +512,7 @@ const HandleProduct = () => {
     try {
       setError(null);
       const response = await api.post(
-        `/admin/product-image-primary/${imageId}`
+        `/admin/product-image-primary/${imageId}`,
       );
 
       if (response.data.success) {
@@ -533,7 +539,7 @@ const HandleProduct = () => {
     try {
       setError(null);
       const response = await api.delete(
-        `/admin/product-image-delete/${imageId}`
+        `/admin/product-image-delete/${imageId}`,
       );
 
       if (response.data.success) {
@@ -629,7 +635,7 @@ const HandleProduct = () => {
           response.data.message ||
             `Product information ${
               existingInfo ? "updated" : "added"
-            } successfully!`
+            } successfully!`,
         );
 
         await fetchData(); // Refresh to get updated product data
@@ -641,13 +647,13 @@ const HandleProduct = () => {
       } else {
         setError(
           response.data.message ||
-            `Failed to ${existingInfo ? "update" : "add"} product information.`
+            `Failed to ${existingInfo ? "update" : "add"} product information.`,
         );
       }
     } catch (err) {
       console.error(
         "Error saving product information:",
-        err.response?.data || err
+        err.response?.data || err,
       );
 
       if (err.response?.data?.errors) {
@@ -680,7 +686,7 @@ const HandleProduct = () => {
 
     if (
       !window.confirm(
-        "Are you sure you want to delete this product information?"
+        "Are you sure you want to delete this product information?",
       )
     ) {
       return;
@@ -689,7 +695,7 @@ const HandleProduct = () => {
     try {
       setError(null);
       const response = await api.delete(
-        `/admin/product-information-delete/${info.id}`
+        `/admin/product-information-delete/${info.id}`,
       );
 
       if (response.data.success) {
@@ -701,7 +707,7 @@ const HandleProduct = () => {
         }, 3000);
       } else {
         setError(
-          response.data.message || "Failed to delete product information."
+          response.data.message || "Failed to delete product information.",
         );
       }
     } catch (err) {
@@ -753,7 +759,7 @@ const HandleProduct = () => {
         )}
 
         {/* ========== PRODUCT FORM SECTION ========== */}
-        <div className="mb-8">
+       <div ref={formRef} className="mb-8">
           {showForm ? (
             <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
               <div className="flex justify-between items-center mb-6">
@@ -889,7 +895,7 @@ const HandleProduct = () => {
                       name="price"
                       value={formData.price}
                       onChange={handleInputChange}
-                      required
+                      // required
                       min="0"
                       step="0.01"
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent bg-white text-gray-900"
@@ -969,51 +975,72 @@ const HandleProduct = () => {
                     </h3>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">Base Price (including GST):</span>
+                        <span className="text-sm text-gray-600">
+                          Base Price (including GST):
+                        </span>
                         <span className="text-sm font-medium text-gray-900">
                           ₹{parseFloat(formData.price || 0).toFixed(2)}
                         </span>
                       </div>
-                      
-                      {formData.discount_percentage && parseFloat(formData.discount_percentage) > 0 && (
-                        <>
-                          <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Discount ({formData.discount_percentage}%):</span>
-                            <span className="text-sm font-medium text-red-600">
-                              - ₹{((parseFloat(formData.price || 0) * parseFloat(formData.discount_percentage || 0)) / 100).toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between border-t border-gray-200 pt-2">
-                            <span className="text-sm font-medium text-gray-700">Selling Price (including GST):</span>
-                            <span className="text-sm font-bold text-green-600">
-                              ₹{sellingPrice}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                      
+
+                      {formData.discount_percentage &&
+                        parseFloat(formData.discount_percentage) > 0 && (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-gray-600">
+                                Discount ({formData.discount_percentage}%):
+                              </span>
+                              <span className="text-sm font-medium text-red-600">
+                                - ₹
+                                {(
+                                  (parseFloat(formData.price || 0) *
+                                    parseFloat(
+                                      formData.discount_percentage || 0,
+                                    )) /
+                                  100
+                                ).toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex justify-between border-t border-gray-200 pt-2">
+                              <span className="text-sm font-medium text-gray-700">
+                                Selling Price (including GST):
+                              </span>
+                              <span className="text-sm font-bold text-green-600">
+                                ₹{sellingPrice}
+                              </span>
+                            </div>
+                          </>
+                        )}
+
                       {hsnDetails && parseFloat(sellingPrice) > 0 && (
                         <>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">Base Price without GST:</span>
+                            <span className="text-sm text-gray-600">
+                              Base Price without GST:
+                            </span>
                             <span className="text-sm font-medium text-gray-900">
                               ₹{gstBreakdown.basePriceWithoutGST}
                             </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-sm text-gray-600">GST ({hsnDetails.gst_rate}%) included:</span>
+                            <span className="text-sm text-gray-600">
+                              GST ({hsnDetails.gst_rate}%) included:
+                            </span>
                             <span className="text-sm font-medium text-gray-900">
                               ₹{gstBreakdown.gstIncluded}
                             </span>
                           </div>
                           <div className="flex justify-between border-t border-gray-200 pt-2">
-                            <span className="text-sm font-bold text-gray-900">Final Selling Price (including GST):</span>
+                            <span className="text-sm font-bold text-gray-900">
+                              Final Selling Price (including GST):
+                            </span>
                             <span className="text-sm font-bold text-blue-600">
                               ₹{sellingPrice}
                             </span>
                           </div>
                           <div className="text-xs text-gray-500 mt-2">
-                            Note: GST of {hsnDetails.gst_rate}% is already included in the price
+                            Note: GST of {hsnDetails.gst_rate}% is already
+                            included in the price
                           </div>
                         </>
                       )}
@@ -1240,7 +1267,7 @@ const HandleProduct = () => {
                   <div className="text-xs text-gray-500 mt-3">
                     Last updated:{" "}
                     {new Date(
-                      productInformation.updated_at
+                      productInformation.updated_at,
                     ).toLocaleDateString()}
                   </div>
                 </div>
@@ -1642,22 +1669,31 @@ const HandleProduct = () => {
                   {products.map((product) => {
                     // Calculate selling price for display
                     const basePrice = parseFloat(product.price) || 0;
-                    const discountPercentage = parseFloat(product.discount_percentage) || 0;
-                    const discountAmount = (basePrice * discountPercentage) / 100;
+                    const discountPercentage =
+                      parseFloat(product.discount_percentage) || 0;
+                    const discountAmount =
+                      (basePrice * discountPercentage) / 100;
                     const sellingPrice = basePrice - discountAmount;
-                    
+
                     // Find HSN details for this product
-                    const productHsn = hsnCodes.find(hsn => hsn.hsn_code === product.hsn_code);
-                    let gstBreakdown = { gstRate: 0, gstIncluded: 0, basePriceWithoutGST: sellingPrice };
-                    
+                    const productHsn = hsnCodes.find(
+                      (hsn) => hsn.hsn_code === product.hsn_code,
+                    );
+                    let gstBreakdown = {
+                      gstRate: 0,
+                      gstIncluded: 0,
+                      basePriceWithoutGST: sellingPrice,
+                    };
+
                     if (productHsn && sellingPrice > 0) {
                       const gstRate = parseFloat(productHsn.gst_rate) || 0;
-                      const gstIncluded = (sellingPrice * gstRate) / (100 + gstRate);
+                      const gstIncluded =
+                        (sellingPrice * gstRate) / (100 + gstRate);
                       const basePriceWithoutGST = sellingPrice - gstIncluded;
                       gstBreakdown = {
                         gstRate,
                         gstIncluded: gstIncluded.toFixed(2),
-                        basePriceWithoutGST: basePriceWithoutGST.toFixed(2)
+                        basePriceWithoutGST: basePriceWithoutGST.toFixed(2),
                       };
                     }
 
@@ -1706,7 +1742,8 @@ const HandleProduct = () => {
                             )}
                             {productHsn && (
                               <div className="text-xs text-gray-500">
-                                Base: ₹{gstBreakdown.basePriceWithoutGST} + GST: ₹{gstBreakdown.gstIncluded}
+                                Base: ₹{gstBreakdown.basePriceWithoutGST} + GST:
+                                ₹{gstBreakdown.gstIncluded}
                               </div>
                             )}
                           </div>
