@@ -109,9 +109,7 @@ const Footer = ({ footerInfo = {} }) => {
         {/* Developer Credit */}
         <div className="mt-6 flex justify-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg   ">
-            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] flex items-center justify-center flex-shrink-0">
-              <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
-            </div>
+          
 
             <a
               href="https://skilledworkerscloud.com"
