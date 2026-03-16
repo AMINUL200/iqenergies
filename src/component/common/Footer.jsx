@@ -46,7 +46,11 @@ const Footer = ({ footerInfo = {} }) => {
 
           {/* ================= CENTER: BROCHURE QR ================= */}
           <div className="text-center space-y-4">
-            <h3 className="text-lg font-semibold" style={{ color: "#0F766E" }} alt={footerInfo.brochure_alt || "Download Brochure QR"}>
+            <h3
+              className="text-lg font-semibold"
+              style={{ color: "#0F766E" }}
+              alt={footerInfo.brochure_alt || "Download Brochure QR"}
+            >
               Download Our Brochure
             </h3>
 
@@ -78,7 +82,10 @@ const Footer = ({ footerInfo = {} }) => {
 
             <div className="bg-white p-4 inline-block shadow-md">
               <img
-                src={footerInfo.cirtificate_image_url || "/image/certificate-qr.png"}
+                src={
+                  footerInfo.cirtificate_image_url ||
+                  "/image/certificate-qr.png"
+                }
                 alt="Certificate QR"
                 className="w-44 h-44 object-contain"
               />
@@ -97,6 +104,24 @@ const Footer = ({ footerInfo = {} }) => {
         {/* ================= BOTTOM COPYRIGHT ================= */}
         <div className="mt-16 text-center text-sm text-gray-500">
           © {new Date().getFullYear()} IQ Energies. All rights reserved.
+        </div>
+
+        {/* Developer Credit */}
+        <div className="mt-6 flex justify-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg   ">
+            <div className="w-5 h-5 rounded-full bg-gradient-to-r from-[#FF9933] via-white to-[#138808] flex items-center justify-center flex-shrink-0">
+              <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />
+            </div>
+
+            <a
+              href="https://skilledworkerscloud.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-gray hover:text-black transition-colors whitespace-nowrap"
+            >
+              Developed by Skilled Workers Cloud
+            </a>
+          </div>
         </div>
       </div>
     </footer>
