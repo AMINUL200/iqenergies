@@ -212,6 +212,8 @@ const CheckoutPage = () => {
         gateway: "razorpay"
       });
 
+      console.log("Payment initiation response:", paymentResponse);
+
       if (!paymentResponse.data?.success) {
         throw new Error(paymentResponse.data?.message || "Payment initiation failed");
       }

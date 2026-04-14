@@ -162,7 +162,7 @@ const HandlePaymentGateway = () => {
     setProcessing(true);
     try {
       const endpoint = editingConfig
-        ? `/admin/payment-gateways/${editingGateway.id}/configs/${editingConfig.id}`
+        ? `/admin/gateway-configs/${editingConfig.id}`
         : `/admin/payment-gateways/${editingGateway.id}/configs`;
       
       const method = editingConfig ? 'put' : 'post';
@@ -493,8 +493,8 @@ const HandlePaymentGateway = () => {
                   }}
                 >
                   <option value="test">Test</option>
-                  <option value="production">Production</option>
-                  <option value="sandbox">Sandbox</option>
+                  <option value="live">Live</option>
+                  {/* <option value="sandbox">Sandbox</option> */}
                 </select>
               </div>
 
