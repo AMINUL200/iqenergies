@@ -530,184 +530,197 @@ const ProductSection = ({ productData = [] }) => {
 
         {/* ================= PRODUCT GRID ================= */}
         {activeProducts.length > 0 ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {activeProducts.map((product) => {
-              const Icon = product.icon;
-              const quantity = getProductQuantity(product.id);
-              const isLoading = addingToCart[product.id];
+          <div className="flex justify-center">
+            <div
+              className="grid gap-8"
+              style={{
+                gridTemplateColumns:
+                  activeProducts.length < 4
+                    ? `repeat(${activeProducts.length}, 320px)`
+                    : "repeat(4, 1fr)",
+                justifyContent: "center",
+                width: "100%",
+                maxWidth: "1300px",
+              }}
+            >
+              {activeProducts.map((product) => {
+                const Icon = product.icon;
+                const quantity = getProductQuantity(product.id);
+                const isLoading = addingToCart[product.id];
 
-              return (
-                <div
-                  key={product.id}
-                  className={`group rounded-2xl overflow-hidden bg-white/5 border ${theme.border} transition-all duration-300 hover:-translate-y-1`}
-                >
-                  {/* Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={product.image}
-                      alt={product.title}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      onError={(e) => {
-                        e.target.src = `https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop`;
-                      }}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                return (
+                  <div
+                    key={product.id}
+                    className={`group rounded-2xl overflow-hidden bg-white/5 border ${theme.border} transition-all duration-300 hover:-translate-y-1`}
+                  >
+                    {/* Image */}
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={product.image}
+                        alt={product.title}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        onError={(e) => {
+                          e.target.src = `https://images.unsplash.com/photo-1509391366360-2e959784a276?w=800&auto=format&fit=crop`;
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
 
-                    {/* Discount Badge on Image */}
-                    {product.discountPercentage > 0 && (
-                      <div className="absolute top-3 right-3">
-                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
-                          <Percent className="w-2 h-2 mr-0.5" />
-                          {product.discountPercentage}% OFF
+                      {/* Discount Badge on Image */}
+                      {product.discountPercentage > 0 && (
+                        <div className="absolute top-3 right-3">
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-bold bg-red-500 text-white">
+                            <Percent className="w-2 h-2 mr-0.5" />
+                            {product.discountPercentage}% OFF
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    {/* Icon */}
-                    <div
-                      className={`absolute top-3 left-3 p-2 rounded-lg ${theme.light}`}
-                    >
-                      <Icon className={`w-4 h-4 ${theme.text}`} />
+                      {/* Icon */}
+                      <div
+                        className={`absolute top-3 left-3 p-2 rounded-lg ${theme.light}`}
+                      >
+                        <Icon className={`w-4 h-4 ${theme.text}`} />
+                      </div>
+
+                      {/* Cart Quantity Badge */}
+                      {quantity > 0 && (
+                        <div className="absolute bottom-3 left-3">
+                          <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
+                            {quantity} in cart
+                          </div>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Cart Quantity Badge */}
-                    {quantity > 0 && (
-                      <div className="absolute bottom-3 left-3">
-                        <div className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-green-500 text-white">
-                          {quantity} in cart
+                    {/* Content */}
+                    <div className="p-5">
+                      <h3 className="text-lg font-semibold text-white mb-3 line-clamp-2">
+                        {product.title}
+                      </h3>
+
+                      {/* Short Description */}
+                      {product.short_description && (
+                        <p className="text-gray-400 text-sm mb-4 line-clamp-2">
+                          {product.short_description}
+                        </p>
+                      )}
+
+                      {/* Price Display */}
+                      {product.sellingPrice > 0 && (
+                        <PriceDisplay product={product} compact={true} />
+                      )}
+
+                      {/* Rating */}
+                      {product.rating > 0 && (
+                        <div className="flex items-center gap-1 mb-4">
+                          <span className="text-yellow-400">★</span>
+                          <span className="text-gray-300 text-sm">
+                            {product.rating}
+                          </span>
                         </div>
-                      </div>
-                    )}
-                  </div>
+                      )}
 
-                  {/* Content */}
-                  <div className="p-5">
-                    <h3 className="text-lg font-semibold text-white mb-3 line-clamp-2">
-                      {product.title}
-                    </h3>
-
-                    {/* Short Description */}
-                    {product.short_description && (
-                      <p className="text-gray-400 text-sm mb-4 line-clamp-2">
-                        {product.short_description}
-                      </p>
-                    )}
-
-                    {/* Price Display */}
-                    {product.sellingPrice > 0 && (
-                      <PriceDisplay product={product} compact={true} />
-                    )}
-
-                    {/* Rating */}
-                    {product.rating > 0 && (
-                      <div className="flex items-center gap-1 mb-4">
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-gray-300 text-sm">
-                          {product.rating}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Cart Controls */}
-                    <div className="mt-4">
-                      {product.sellingPrice <= 0 ? (
-                        // Contact Button when price is 0
-                        <button
-                          onClick={() => navigate("/contact")}
-                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold bg-gradient-to-r ${theme.gradient} hover:opacity-90 transition`}
-                        >
-                          Contact Us
-                        </button>
-                      ) : quantity === 0 ? (
-                        // Add to Cart Button (when quantity is 0)
-                        <button
-                          onClick={() => handleAddToCart(product)}
-                          disabled={isLoading}
-                          className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all
+                      {/* Cart Controls */}
+                      <div className="mt-4">
+                        {product.sellingPrice <= 0 ? (
+                          // Contact Button when price is 0
+                          <button
+                            onClick={() => navigate("/contact")}
+                            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold bg-gradient-to-r ${theme.gradient} hover:opacity-90 transition`}
+                          >
+                            Contact Us
+                          </button>
+                        ) : quantity === 0 ? (
+                          // Add to Cart Button (when quantity is 0)
+                          <button
+                            onClick={() => handleAddToCart(product)}
+                            disabled={isLoading}
+                            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-semibold transition-all
                             ${
                               isLoading
                                 ? "bg-gray-600 cursor-not-allowed"
                                 : `bg-gradient-to-r ${theme.gradient} hover:opacity-90`
                             }`}
-                        >
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                              <span>Adding...</span>
-                            </>
-                          ) : (
-                            <>
-                              <ShoppingCart className="w-4 h-4" />
-                              <span>Add to Cart</span>
-                            </>
-                          )}
-                        </button>
-                      ) : (
-                        // Quantity Controls (when quantity > 0)
-                        <div className="flex items-center justify-between bg-white/10 rounded-lg p-2">
-                          {/* Decrement Button */}
-                          <button
-                            onClick={() => decrementQuantity(product)}
-                            disabled={isLoading}
-                            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
+                          >
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <span>Adding...</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingCart className="w-4 h-4" />
+                                <span>Add to Cart</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          // Quantity Controls (when quantity > 0)
+                          <div className="flex items-center justify-between bg-white/10 rounded-lg p-2">
+                            {/* Decrement Button */}
+                            <button
+                              onClick={() => decrementQuantity(product)}
+                              disabled={isLoading}
+                              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
                               ${
                                 isLoading
                                   ? "bg-gray-700 cursor-not-allowed"
                                   : "bg-red-500/20 hover:bg-red-500/30"
                               }`}
-                          >
-                            {isLoading ? (
-                              <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
-                            ) : (
-                              <Minus className="w-3 h-3 text-red-400" />
-                            )}
-                          </button>
+                            >
+                              {isLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
+                              ) : (
+                                <Minus className="w-3 h-3 text-red-400" />
+                              )}
+                            </button>
 
-                          {/* Quantity Display */}
-                          <div className="flex flex-col items-center">
-                            <span className="text-sm font-bold text-white">
-                              {quantity}
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              in cart
-                            </span>
-                          </div>
+                            {/* Quantity Display */}
+                            <div className="flex flex-col items-center">
+                              <span className="text-sm font-bold text-white">
+                                {quantity}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                in cart
+                              </span>
+                            </div>
 
-                          {/* Increment Button */}
-                          <button
-                            onClick={() => incrementQuantity(product)}
-                            disabled={isLoading}
-                            className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
+                            {/* Increment Button */}
+                            <button
+                              onClick={() => incrementQuantity(product)}
+                              disabled={isLoading}
+                              className={`flex items-center justify-center w-8 h-8 rounded-lg transition-colors
                               ${
                                 isLoading
                                   ? "bg-gray-700 cursor-not-allowed"
                                   : "bg-green-500/20 hover:bg-green-500/30"
                               }`}
-                          >
-                            {isLoading ? (
-                              <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
-                            ) : (
-                              <Plus className="w-3 h-3 text-green-400" />
-                            )}
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                            >
+                              {isLoading ? (
+                                <Loader2 className="w-3 h-3 animate-spin text-gray-300" />
+                              ) : (
+                                <Plus className="w-3 h-3 text-green-400" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
 
-                    {/* View Details Button */}
-                    <button
-                      onClick={() =>
-                        navigate(`/product/${product.slug || product.id}`)
-                      }
-                      className={`w-full mt-3 flex items-center justify-center gap-2 font-semibold ${theme.text} cursor-pointer hover:opacity-80 transition-opacity py-2`}
-                    >
-                      View Details
-                      <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
-                    </button>
+                      {/* View Details Button */}
+                      <button
+                        onClick={() =>
+                          navigate(`/product/${product.slug || product.id}`)
+                        }
+                        className={`w-full mt-3 flex items-center justify-center gap-2 font-semibold ${theme.text} cursor-pointer hover:opacity-80 transition-opacity py-2`}
+                      >
+                        View Details
+                        <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         ) : (
           <div className="text-center py-10">
